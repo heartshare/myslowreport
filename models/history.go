@@ -17,6 +17,7 @@ func Get(since time.Time, until time.Time) {
 	count, err := orm.NewOrm().Raw("SELECT db_max, user_max FROM mysql_slow_query_review_history").QueryRows(&sl)
 	if err == nil {
 		fmt.Println("Count: ", count)
+		fmt.Println("Data: ", sl)
 	} else {
 		fmt.Println(err.Error())
 	}

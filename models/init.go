@@ -49,8 +49,12 @@ func MyslowReportTimeout() int {
 	return t
 }
 
-func MyslowReportSummaryspec() string {
-	return beego.AppConfig.String("myslowreport.summaryspec")
+func SyncMysqlSlowlogSpec() string {
+	return beego.AppConfig.String("myslowreport.syncmysqlslowlog")
+}
+
+func SendMysqlSlowlogReportSpec() string {
+	return beego.AppConfig.String("myslowreport.sendreportemailspec")
 }
 
 func MyslowReportRetry() int {
