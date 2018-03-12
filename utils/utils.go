@@ -2,6 +2,9 @@ package utils
 
 import (
 	"strings"
+	"os"
+	"time"
+	"strconv"
 )
 
 func Substr(str string, start, length int) string {
@@ -51,4 +54,77 @@ func GetValue(str string) string {
 	val = strings.TrimRight(val, " ")
 
 	return val
+}
+
+func FileExists(file string) bool {
+	_, err := os.Stat(file)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func WeekdayCNString(t time.Time) string {
+	weekDay := t.Weekday().String()
+	if strings.Contains(weekDay, "Sunday") {
+		return "星期天"
+	} else if strings.Contains(weekDay, "Monday") {
+		return "星期一"
+	} else if strings.Contains(weekDay, "Tuesday") {
+		return "星期二"
+	} else if strings.Contains(weekDay, "Wednesday") {
+		return "星期三"
+	} else if strings.Contains(weekDay, "Thursday") {
+		return "星期四"
+	} else if strings.Contains(weekDay, "Friday") {
+		return "星期五"
+	} else if strings.Contains(weekDay, "Saturday") {
+		return "星期六"
+	} else {
+		return ""
+	}
+}
+
+//2006-01-02 15:04:05
+func Today() time.Time {
+	return time.Now()
+}
+func TodayStringByFormat(format string) string {
+	return Today().Format(format)
+}
+
+func Yesterday() time.Time {
+	return time.Now().AddDate(0, 0, -1)
+}
+
+func YesterdayString() string {
+	return Yesterday().Format("20060102")
+}
+
+func YesterdayStringByFormat(format string) string {
+	return Yesterday().Format(format)
+}
+
+func BeforeYesterday() time.Time {
+	return time.Now().AddDate(0, 0, -2)
+}
+
+func BeforeYesterdayStringByFormat(format string) string {
+	return BeforeYesterday().Format(format)
+}
+
+func StringToTimeByFormat(s string, format string) time.Time {
+	t, _ := time.Parse(format, s)
+	return t
+}
+
+func StringToFloat64(s string, defaultValue float64) float64 {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return defaultValue
+	}
+	return v
 }
