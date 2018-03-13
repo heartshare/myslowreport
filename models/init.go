@@ -145,12 +145,33 @@ func myslowReportTotest() string {
 }
 
 func MyslowReportTos() string {
+	tos := ""
 	todev := strings.TrimRight(strings.TrimLeft(myslowReportTodev(), ";"), ";")
-	totest := strings.TrimRight(strings.TrimLeft(myslowReportTotest(), ";"), ";")
-	toops := strings.TrimRight(strings.TrimLeft(myslowReportToops(), ";"), ";")
-	toleader := strings.TrimRight(strings.TrimLeft(myslowReportToleader(), ";"), ";")
+	if len(todev) > 1 {
+		tos += todev
+		tos += ";"
+	}
 
-	return fmt.Sprintf("%s;%s;%s;%s", todev, totest, toops, toleader)
+	totest := strings.TrimRight(strings.TrimLeft(myslowReportTotest(), ";"), ";")
+	if len(totest) > 1 {
+		tos += totest
+		tos += ";"
+	}
+
+	toops := strings.TrimRight(strings.TrimLeft(myslowReportToops(), ";"), ";")
+	if len(toops) > 1 {
+		tos += toops
+		tos += ";"
+	}
+
+	toleader := strings.TrimRight(strings.TrimLeft(myslowReportToleader(), ";"), ";")
+	if len(toleader) > 1 {
+		tos += toleader
+	}
+
+	tos = strings.TrimLeft(tos, ";")
+	tos = strings.TrimRight(tos, ";")
+	return fmt.Sprintf("%s", tos)
 }
 
 func myslowReportCols() string {

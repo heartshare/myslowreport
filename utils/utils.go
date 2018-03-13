@@ -88,6 +88,27 @@ func WeekdayCNString(t time.Time) string {
 	}
 }
 
+func WeekdayCNShortString(t time.Time) string {
+        weekDay := t.Weekday().String()
+        if strings.Contains(weekDay, "Sunday") {
+                return "天"
+        } else if strings.Contains(weekDay, "Monday") {
+                return "一"
+        } else if strings.Contains(weekDay, "Tuesday") {
+                return "二"
+        } else if strings.Contains(weekDay, "Wednesday") {
+                return "三"
+        } else if strings.Contains(weekDay, "Thursday") {
+                return "四"
+        } else if strings.Contains(weekDay, "Friday") {
+                return "五"
+        } else if strings.Contains(weekDay, "Saturday") {
+                return "六"
+        } else {
+                return ""
+        }
+}
+
 //2006-01-02 15:04:05
 func Today() time.Time {
 	return time.Now()
@@ -116,6 +137,18 @@ func BeforeYesterdayStringByFormat(format string) string {
 	return BeforeYesterday().Format(format)
 }
 
+func BeforeBeforeYesterday() time.Time {
+	return time.Now().AddDate(0, 0, -3)
+}
+
+func BeforeBeforeYesterdayStringByFormat(format string) string {
+	return BeforeBeforeYesterday().Format(format)
+}
+
+func DateStringByFormat(days int, format string) string {
+	return time.Now().AddDate(0, 0, days).Format(format)
+}
+
 func StringToTimeByFormat(s string, format string) time.Time {
 	t, _ := time.Parse(format, s)
 	return t
@@ -127,4 +160,13 @@ func StringToFloat64(s string, defaultValue float64) float64 {
 		return defaultValue
 	}
 	return v
+}
+
+func SaveReport(file string, content string) {
+	fout, err := os.Create(file)
+	defer fout.Close()
+	if err!= nil {
+		return
+	}
+	fout.Write([]byte(content))
 }

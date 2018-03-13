@@ -128,6 +128,52 @@ var defaultStringValue = "Unknown"
 var defaultFloatValue = 0.0
 var defaultTime = time.Now()
 
+func GetSumOfQueryCount(since string, until string, table string) int64 {
+	retry := DbRetry()
+	sql := fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s'",
+	tableFields[TsCnt], table, tableFields[TsMin], since, tableFields[TsMax], until)
+	var sum int64
+	var err error
+
+	for i := 0; i < retry; i++ {
+		sum = 0
+		err = nil
+		err = orm.NewOrm().Raw(sql).QueryRow(&sum)
+
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when GetSumOfQueryCount %s: %s", table, err))
+			continue
+		}
+	}
+	
+	return int64(sum)
+}
+
+func GetUniqOfQueryCount(since string, until string, table string) int64 {
+	retry := DbRetry()
+	sql := fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s'",
+		table, tableFields[TsMin], since, tableFields[TsMax], until)
+	var count int64
+	var err error
+
+	for i := 0; i < retry; i++ {
+		count = 0
+		err = nil
+		err = orm.NewOrm().Raw(sql).QueryRow(&count)
+
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when GetUniqOfQueryCount %s: %s", table, err))
+			continue
+		}
+	}
+	
+	return int64(count)
+}
+
 func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64, []Item) {
 	retry := DbRetry()
 	sql := fmt.Sprintf("SELECT " +
