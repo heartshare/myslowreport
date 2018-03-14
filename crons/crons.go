@@ -104,6 +104,8 @@ func createReport() string {
 		beego.Info(fmt.Sprintf("Creating report content: %s", p.SlowlogTable))
 		slowInfo += createSlowInfo(items, p, i)
 		slowInfo += "<br/>"
+		slowInfo += `<hr style="#FF710C;" />`
+		slowInfo += "<br/>"
 		beego.Info(fmt.Sprintf("End Create report content: %s", p.SlowlogTable))
 	}
 
@@ -274,17 +276,15 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 		}
 		colWidth := fmt.Sprintf("%d", width)
 		colsWidth = append(colsWidth, colWidth)
-		tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`		
+		tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`		
 		tmp = strings.Replace(tmp, "999999999", colWidth, -1)		
+		tmp = strings.Replace(tmp, "88888888", "50", -1)		
 		tmp = strings.Replace(tmp, "SlowQuerySample", colName, -1)
 		info += tmp
 	}
 	info += `</tr>`
 
 	for _, i := range items {
-		//if strings.Contains(i.Sample, "km_tbl_kcloud_agentpushcompany") {
-		//	continue
-		//}
 		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
 		info += createItem(i, colsWidth)
 		info += `</tr>`
@@ -301,19 +301,21 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 
 func createItem(item models.Item, colsWidth []string) string {
 	defaultItem := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	defaultItemSample :=  `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`		
+	defaultItemSample :=  `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`	
 	
 	s := ""
 	i := 0
 
 	tmp := defaultItemSample
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx", item.Sample, -1)
 	s += tmp
 	i++
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(fmt.Sprintf("%.1f", item.TsCnt), ".0"), -1)
 	s += tmp
@@ -321,12 +323,14 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx", item.UserMax, -1)
 	s += tmp
 	i++
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp  = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMin), "0"), "."), -1)
 	s += tmp
@@ -334,6 +338,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp  = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMax),"0"),"."),-1)
 	s += tmp
@@ -341,6 +346,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimePct95),"0"),"."),-1)
 	s += tmp
@@ -348,6 +354,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.LockTimeMin),"0"),"."),-1)
 	s += tmp
@@ -355,6 +362,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMax),"0"),"."),-1)
 	s += tmp
@@ -362,6 +370,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimePct95),"0"),"."),-1)
 	s += tmp
@@ -369,6 +378,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedMin),"0"),"."),-1)
 	s += tmp
@@ -376,6 +386,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedMax),"0"),"."),-1)
 	s += tmp
@@ -383,6 +394,7 @@ func createItem(item models.Item, colsWidth []string) string {
 
 	tmp = defaultItem
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
 		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedPct95), "0"),"."),-1)
 	s += tmp
