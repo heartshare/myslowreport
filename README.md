@@ -1,7 +1,7 @@
 # myslowreport
 
 ### 需要
-1. mysql服务器上配置rsync用于同步慢日志
+1. mysql服务器上配置rsync用于同步慢日志,同时部署切割慢日志脚本cut_myslow.sh
 2. 部署一台mysql数据库用于导入慢日志
 3. 运行报告程序的机器部署perconatoolkit工具包
 
