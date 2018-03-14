@@ -70,6 +70,11 @@ func createReport() string {
  					if (tb.style.display=='none') tb.style.display='block';
  					else tb.style.display='none';
 				}
+
+				function getTooltip(_obj, tip) {
+   					var tValue = tip + _obj.innerText;
+   					_obj.setAttribute("title", tValue);
+				}
 			</script>
 		</head>`
 
@@ -263,6 +268,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 		return ""
 	}
 	// col name,col width
+	var colsName = []string{}
 	var colsWidth = []string{}
 	for _, col := range cols {
 		l := strings.Split(col, ",")
@@ -276,6 +282,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 		}
 		colWidth := fmt.Sprintf("%d", width)
 		colsWidth = append(colsWidth, colWidth)
+		colsName = append(colsName, colName)
 		tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`		
 		tmp = strings.Replace(tmp, "999999999", colWidth, -1)		
 		tmp = strings.Replace(tmp, "88888888", "50", -1)		
@@ -286,7 +293,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 
 	for _, i := range items {
 		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
-		info += createItem(i, colsWidth)
+		info += createItem(i, colsWidth, colsName)
 		info += `</tr>`
 	}
 
@@ -299,9 +306,9 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 	return info
 }
 
-func createItem(item models.Item, colsWidth []string) string {
-	defaultItem := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	defaultItemSample :=  `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`	
+func createItem(item models.Item, colsWidth []string, colsName []string) string {
+	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	defaultItemSample :=  `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`
 	
 	s := ""
 	i := 0
@@ -314,6 +321,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -322,6 +330,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx", item.UserMax, -1)
@@ -329,6 +338,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp  = strings.Replace(tmp, "xxx",
@@ -337,6 +347,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp  = strings.Replace(tmp, "xxx",
@@ -345,6 +356,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -353,6 +365,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -361,6 +374,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -369,6 +383,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -377,6 +392,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -385,6 +401,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
@@ -393,6 +410,7 @@ func createItem(item models.Item, colsWidth []string) string {
 	i++
 
 	tmp = defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx",
