@@ -13,6 +13,8 @@
 ### 注意
 pt-query-digest 导入时会缺少 db_max user_max 两个字段, 因此需要事先建好表, 表结构如下:
 
+表名根据实际情况修改,这个有对应到conf下的配置的
+
 ```Java
 CREATE TABLE `myslow_history_10_120_3306` (
   `db_max` varchar(100) DEFAULT NULL,
