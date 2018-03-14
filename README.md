@@ -1,7 +1,7 @@
 # myslowreport
 
 ### 需要
-1. mysql服务器上配置rsync用于同步慢日志
+1. mysql服务器上配置rsync用于同步慢日志,同时部署切割慢日志脚本cut_myslow.sh
 2. 部署一台mysql数据库用于导入慢日志
 3. 运行报告程序的机器部署perconatoolkit工具包
 
@@ -12,6 +12,8 @@
 
 ### 注意
 pt-query-digest 导入时会缺少 db_max user_max 两个字段, 因此需要事先建好表, 表结构如下:
+
+表名根据实际情况修改,这个有对应到conf下的配置的
 
 ```Java
 CREATE TABLE `myslow_history_10_120_3306` (
