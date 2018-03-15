@@ -38,46 +38,7 @@ func createReport() string {
 	pl := models.MyslowReportProjectsList()
 	slowInfo := ""
 	slowInfo += `<html>`
-	slowInfo +=
-		`<head>
-    		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    		<style class="fox_global_style">
-        		div.fox_html_content {
-            		line-height: 1.5;
-        		}
-
-        		blockquote {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px;
-            		margin-Left: 0.5em
-        		}
-
-        		ol,
-        		ul {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px;
-            		list-style-position: inside;
-        		}
-
-        		p {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px
-        		}
-    		</style>
-			<script type="text/javascript">
-				function toggle(id) {
- 					var tb=document.getElementById(id);
- 					if (tb.style.display=='none') tb.style.display='block';
- 					else tb.style.display='none';
-				}
-
-				function getTooltip(_obj, tip) {
-   					var tValue = tip + _obj.innerText;
-   					_obj.setAttribute("title", tValue);
-				}
-			</script>
-		</head>`
-
+	slowInfo += htmlHead()
 	slowInfo += `<body>`
 
 	slowInfo += `<div id="content" class="reg">`
@@ -125,6 +86,114 @@ func createReport() string {
 	return slowInfo
 }
 
+func htmlHead() string {
+	head :=
+		`<head>
+    		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    		<style class="fox_global_style">
+        		div.fox_html_content {
+            		line-height: 1.5;
+        		}
+
+        		blockquote {
+            		margin-Top: 0px;
+            		margin-Bottom: 0px;
+            		margin-Left: 0.5em
+        		}
+
+        		ol,
+        		ul {
+            		margin-Top: 0px;
+            		margin-Bottom: 0px;
+            		list-style-position: inside;
+        		}
+
+        		p {
+            		margin-Top: 0px;
+            		margin-Bottom: 0px
+        		}
+    		</style>
+			<script type="text/javascript">
+				function toggle(id) {
+ 					var tb=document.getElementById(id);
+ 					if (tb.style.display=='none') tb.style.display='block';
+ 					else tb.style.display='none';
+				}
+
+				function getTooltip(_obj, tip) {
+   					var tValue = tip + _obj.innerText;
+   					_obj.setAttribute("title", tValue);
+				}
+			</script>
+		</head>`
+
+		return head
+}
+
+func growthRate(this int64, other int64) float64 {
+	if other != 0 {
+		return (float64(this - other)) * 100 / float64(other)
+	}
+	return 0.0
+}
+
+func growtRateStrAndColor(rate float64, other int64) (string, string) {
+	str := ""
+	color := "black"
+	if rate > 0.0 {
+		str = fmt.Sprintf("+%.2f%%", rate)
+		color = "red"
+	} else if rate < 0.0 {
+		str = fmt.Sprintf("%.2f%%", rate)
+		color = "green"
+	} else {
+		if other == 0{
+			str = "NULL"
+			color = "gray"
+		} else {
+			str = "--"
+		}
+	}
+
+	return str, color
+}
+
+func yesterdayTotal(table string) int64 {
+	return models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02")),
+		table)
+}
+
+func beforeYesterdayTotal(table string) int64 {
+	return models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeBeforeYesterdayStringByFormat("2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.YesterdayStringByFormat("2006-01-02")),
+		table)
+}
+
+func yoyBasisTotal(table string) int64 {
+	return models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.DateStringByFormat(-9,"2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.DateStringByFormat(-7,"2006-01-02")),
+		table)
+}
+
+func yesterdayUniq(table string) int64 {
+	return models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02")),
+		table)
+}
+
+func beforeYesterdayUniq(table string) int64 {
+	return models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeBeforeYesterdayStringByFormat("2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.YesterdayStringByFormat("2006-01-02")),
+		table)
+}
+
+func yoyBasisUniq(table string) int64 {
+	return models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.DateStringByFormat(-9,"2006-01-02")),
+		fmt.Sprintf("%s 00:00:00", utils.DateStringByFormat(-7,"2006-01-02")),
+		table)
+}
+
 func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 	var info = ""
 
@@ -133,121 +202,35 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 	info = strings.Replace(info, "192.168.10.1", p.MysqlHost, -1)
 	info = strings.Replace(info, "Project", p.Description, -1)
 
-	yesterdayTotal := models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02")),
-		p.SlowlogTable)
-	beforeYesterdayTotal := models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeBeforeYesterdayStringByFormat("2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.YesterdayStringByFormat("2006-01-02")),
-		p.SlowlogTable)
-	yoyBasisTotal := models.GetSumOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.DateStringByFormat(-9,"2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.DateStringByFormat(-7,"2006-01-02")),
-		p.SlowlogTable)
-
-	yesterdayUniq := models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02")),
-		p.SlowlogTable)
-	beforeYesterdayUniq := models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.BeforeBeforeYesterdayStringByFormat("2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.YesterdayStringByFormat("2006-01-02")),
-		p.SlowlogTable)
-	yoyBasisUniq := models.GetUniqOfQueryCount(fmt.Sprintf("%s 23:59:59", utils.DateStringByFormat(-9,"2006-01-02")),
-		fmt.Sprintf("%s 00:00:00", utils.DateStringByFormat(-7,"2006-01-02")),
-		p.SlowlogTable)
-
 	// chain grow with before yesterday and on year-on-year basis (this day last week)
-	chainGrowthRateForTotal := 0.0
-	if  beforeYesterdayTotal != 0 {
-		chainGrowthRateForTotal = (float64(yesterdayTotal - beforeYesterdayTotal)) * 100 / float64(beforeYesterdayTotal)
-	}
-	chainGrowthRateForTotalStr := ""
-	chainGrowthRateForTotalStrColor := "black"
-	if chainGrowthRateForTotal > 0.0 {
-		chainGrowthRateForTotalStr = fmt.Sprintf("+%.2f%%", chainGrowthRateForTotal)
-		chainGrowthRateForTotalStrColor = "red"
-	} else if chainGrowthRateForTotal < 0.0 {
-		chainGrowthRateForTotalStr = fmt.Sprintf("%.2f%%", chainGrowthRateForTotal)
-		chainGrowthRateForTotalStrColor = "green"
-	} else {
-		if beforeYesterdayTotal == 0{
-			chainGrowthRateForTotalStr = "NULL"
-			chainGrowthRateForTotalStrColor = "gray"
-		} else {
-			chainGrowthRateForTotalStr = "--"
-		}
-	}
+	yt := yesterdayTotal(p.SlowlogTable)
+	byt := beforeYesterdayTotal(p.SlowlogTable)
+	yoybt := yoyBasisTotal(p.SlowlogTable)
 
-	yoyBasisRateForTotal := 0.0
-	if  yoyBasisTotal != 0 {
-		yoyBasisRateForTotal = (float64(yesterdayTotal - yoyBasisTotal)) * 100 / float64(yoyBasisTotal)
-	}
-	yoyBasisRateForTotalStr := ""
-	yoyBasisRateForTotalStrColor := "black"
-	if yoyBasisRateForTotal > 0.0 {
-		yoyBasisRateForTotalStr = fmt.Sprintf("+%.2f%%", yoyBasisRateForTotal)
-		yoyBasisRateForTotalStrColor = "red"
-	} else if yoyBasisRateForTotal < 0.0 {
-		yoyBasisRateForTotalStr = fmt.Sprintf("%.2f%%", yoyBasisRateForTotal)
-		yoyBasisRateForTotalStrColor = "green"
-	} else {
-		if yoyBasisTotal == 0 {
-			yoyBasisRateForTotalStr = "NULL"
-			yoyBasisRateForTotalStrColor = "gray"
-		} else {
-			yoyBasisRateForTotalStr = "--"
-		}
-	}
+	chainGrowthRateForTotal := growthRate(yt, byt)
+	chainGrowthRateForTotalStr, chainGrowthRateForTotalStrColor := growtRateStrAndColor(chainGrowthRateForTotal, byt)
+	yoyBasisRateForTotal := growthRate(yt, yoybt)
+	yoyBasisRateForTotalStr, yoyBasisRateForTotalStrColor := growtRateStrAndColor(yoyBasisRateForTotal, yoybt)
 
-	chainGrowthRateForUniq := 0.0
-	if beforeYesterdayUniq != 0 {
-		chainGrowthRateForUniq = (float64(yesterdayUniq - beforeYesterdayUniq)) * 100 / float64(beforeYesterdayUniq)
-	}
-	chainGrowthRateForUniqStr := ""
-	chainGrowthRateForUniqStrColor := "black"
-	if chainGrowthRateForUniq > 0.0 {
-		chainGrowthRateForUniqStr = fmt.Sprintf("+%.2f%%", chainGrowthRateForUniq)
-		chainGrowthRateForUniqStrColor = "red"
-	} else if chainGrowthRateForUniq < 0.0 {
-		chainGrowthRateForUniqStr = fmt.Sprintf("%.2f%%", chainGrowthRateForUniq)
-		chainGrowthRateForUniqStrColor = "green"
-	} else {
-		if beforeYesterdayUniq == 0 {
-			chainGrowthRateForUniqStr = "NULL"
-			chainGrowthRateForUniqStrColor = "gray"
-		} else {
-			chainGrowthRateForUniqStr = "--"
-		}
-	}
+	yu := yesterdayUniq(p.SlowlogTable)
+	byu := beforeYesterdayUniq(p.SlowlogTable)
+	yoybu := yoyBasisUniq(p.SlowlogTable)
 
-	yoyBasisRateForUniq := 0.0
-	if yoyBasisUniq != 0 {
-		yoyBasisRateForUniq = (float64(yesterdayUniq - yoyBasisUniq)) * 100 / float64(yoyBasisUniq)
-	}
-	yoyBasisRateForUniqStr := ""
-	yoyBasisRateForUniqStrColor := "black"
-	if yoyBasisRateForUniq > 0.0 {
-		yoyBasisRateForUniqStr = fmt.Sprintf("+%.2f%%", yoyBasisRateForUniq)
-		yoyBasisRateForUniqStrColor = "red"
-	} else if yoyBasisRateForUniq < 0.0 {
-		yoyBasisRateForUniqStr = fmt.Sprintf("%.2f%%", yoyBasisRateForUniq)
-		yoyBasisRateForUniqStrColor = "green"
-	} else {
-		if yoyBasisUniq == 0 {
-			yoyBasisRateForUniqStr = "NULL"
-			yoyBasisRateForUniqStrColor = "gray"
-		} else {
-			yoyBasisRateForUniqStr = "--"
-		}
-	}
+	chainGrowthRateForUniq := growthRate(yu, byu)
+	chainGrowthRateForUniqStr, chainGrowthRateForUniqStrColor := growtRateStrAndColor(chainGrowthRateForUniq, byu)
+	yoyBasisRateForUniq := growthRate(yu, yoybu)
+	yoyBasisRateForUniqStr, yoyBasisRateForUniqStrColor := growtRateStrAndColor(yoyBasisRateForUniq, yoybu)
 
 
 	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; TotalCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; TChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYTotal &nbsp;&nbsp;</span></p>`
-	info = strings.Replace(info, "TotalCount", fmt.Sprintf("总语句数: %d", yesterdayTotal), -1)
+	info = strings.Replace(info, "TotalCount", fmt.Sprintf("总语句数: %d", yt), -1)
 	info = strings.Replace(info, "TChain", fmt.Sprintf("环比前天: %s", chainGrowthRateForTotalStr), -1)
 	info = strings.Replace(info, "ChainColor", fmt.Sprintf("%s", chainGrowthRateForTotalStrColor), -1)
 	info = strings.Replace(info, "YOYTotal", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForTotalStr), -1)
 	info = strings.Replace(info, "YOYColor", fmt.Sprintf("%s", yoyBasisRateForTotalStrColor), -1)
 	
 	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; UniqCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; UChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYUniq &nbsp;&nbsp;</span></p>`
-	info = strings.Replace(info, "UniqCount", fmt.Sprintf("独立语句数: %d", yesterdayUniq), -1)
+	info = strings.Replace(info, "UniqCount", fmt.Sprintf("独立语句数: %d", yu), -1)
 	info = strings.Replace(info, "UChain", fmt.Sprintf("环比前天: %s", chainGrowthRateForUniqStr), -1)
 	info = strings.Replace(info, "ChainColor", fmt.Sprintf("%s", chainGrowthRateForUniqStrColor), -1)
 	info = strings.Replace(info, "YOYUniq", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForUniqStr), -1)
@@ -283,11 +266,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 		colWidth := fmt.Sprintf("%d", width)
 		colsWidth = append(colsWidth, colWidth)
 		colsName = append(colsName, colName)
-		tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`		
-		tmp = strings.Replace(tmp, "999999999", colWidth, -1)		
-		tmp = strings.Replace(tmp, "88888888", "50", -1)		
-		tmp = strings.Replace(tmp, "SlowQuerySample", colName, -1)
-		info += tmp
+		info += createTableHeader(colWidth, colName)
 	}
 	info += `</tr>`
 
@@ -306,117 +285,88 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 	return info
 }
 
-func createItem(item models.Item, colsWidth []string, colsName []string) string {
+func createTableHeader(colWidth string, colName string) string {
+	tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`
+	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
+	tmp = strings.Replace(tmp, "SlowQuerySample", colName, -1)
+	return tmp
+}
+
+func createIntCol(colName string, colWidth string, val float64) string {
 	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	defaultItemSample :=  `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`
-	
+	tmp := defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
+	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
+	tmp = strings.Replace(tmp, "xxx",
+		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", val), "0"),"."),-1)
+	return tmp
+}
+
+func createFloatCol(colName string, colWidth string, val float64) string {
+	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	tmp := defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
+	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
+	tmp  = strings.Replace(tmp, "xxx",
+		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", val), "0"), "."), -1)
+	return tmp
+}
+
+func createStringCol(colName string, colWidth string, val string) string {
+	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	tmp := defaultItem
+	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
+	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
+	tmp = strings.Replace(tmp, "88888888", "50", -1)
+	tmp = strings.Replace(tmp, "xxx", val, -1)
+	return tmp
+}
+
+func createItem(item models.Item, colsWidth []string, colsName []string) string {
 	s := ""
 	i := 0
 
-	tmp := defaultItemSample
+	tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
 	tmp = strings.Replace(tmp, "xxx", item.Sample, -1)
 	s += tmp
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(fmt.Sprintf("%.1f", item.TsCnt), ".0"), -1)
-	s += tmp
+	s += createIntCol(colsName[i], colsWidth[i], item.TsCnt)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx", item.UserMax, -1)
-	s += tmp
+	s += createStringCol(colsName[i], colsWidth[i], item.UserMax)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp  = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMin), "0"), "."), -1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMin)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp  = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMax),"0"),"."),-1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMax)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimePct95),"0"),"."),-1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimePct95)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.LockTimeMin),"0"),"."),-1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.LockTimeMin)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimeMax),"0"),"."),-1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMax)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", item.QueryTimePct95),"0"),"."),-1)
-	s += tmp
+	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimePct95)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedMin),"0"),"."),-1)
-	s += tmp
+	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedMin)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedMax),"0"),"."),-1)
-	s += tmp
+	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedMax)
 	i++
 
-	tmp = defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colsName[i], -1)
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", item.RowsExaminedPct95), "0"),"."),-1)
-	s += tmp
-	i++
+	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedPct95)
 
 	return s
 }
