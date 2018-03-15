@@ -42,13 +42,12 @@ func createReport() string {
 	slowInfo += `<body>`
 
 	slowInfo += `<div id="content" class="reg">`
-	slowInfo += fmt.Sprintf(`<title>%s</title>`, models.MyslowReportTitle())
+	slowInfo += createTitle()
 	slowInfo += `<div style="LINE-HEIGHT: 20px; FONT-FAMILY: 'Microsoft Yahei'; FONT-SIZE: 12px">`
 	slowInfo += `<div style="MARGIN: 0px auto; WIDTH: 1280px; BACKGROUND: #FF710C; border-top-right-radius: 8px; border-top-left-radius: 8px; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px">`
 	slowInfo += `<div style="WIDTH: 710px; HEIGHT: 10px"></div>`
 	slowInfo += `<div style="PADDING-BOTTOM: 0px; PADDING-LEFT: 0px; WIDTH: 710px; PADDING-RIGHT: 0px; BACKGROUND: #FF710C; HEIGHT: 30px; PADDING-TOP: 10px">`
-	slowInfo += fmt.Sprintf(`<p style="MARGIN: 0px; PADDING-LEFT: 30px; FONT-FAMILY: 'Microsoft Yahei'; COLOR: rgb(255,255,255); FONT-SIZE: 24px">%s %s %s</p>`,
-		models.MyslowReportSubject(), utils.YesterdayStringByFormat("2006-01-02"), utils.WeekdayCNString(utils.Yesterday()))
+	slowInfo += createSubject()
 	slowInfo += `</div>`
 
 	slowInfo += `<div style="BORDER-BOTTOM: #FF710C 1px solid; BORDER-LEFT: #FF710C 1px solid; PADDING-BOTTOM: 5px; PADDING-LEFT: 9px; PADDING-RIGHT: 9px; BACKGROUND: #f9f9f9; BORDER-TOP: #FF710C 1px solid; BORDER-RIGHT: #FF710C 1px solid; PADDING-TOP: 5px">`
@@ -283,6 +282,15 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 	info += `</div>`
 
 	return info
+}
+
+func createTitle() string {
+	return fmt.Sprintf(`<title>%s</title>`, models.MyslowReportTitle())
+}
+
+func createSubject() string {
+	return fmt.Sprintf(`<p style="MARGIN: 0px; PADDING-LEFT: 30px; FONT-FAMILY: 'Microsoft Yahei'; COLOR: rgb(255,255,255); FONT-SIZE: 24px">%s %s %s</p>`,
+		models.MyslowReportSubject(), utils.YesterdayStringByFormat("2006-01-02"), utils.WeekdayCNString(utils.Yesterday()))
 }
 
 func createTableHeader(colWidth string, colName string) string {
