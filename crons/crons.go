@@ -411,7 +411,7 @@ func sendMysqlSlowlogReport() {
 			models.MyslowReportTos(),
 			models.MyslowReportCcs(),
 			models.MyslowReportSubject(),
-			reportFile, "查看详情,请双击打开或者使用浏览器打开附件(推荐使用浏览器打开,Foxmail有些浏览器功能不支持)", "plain")
+			reportFile, "查看详情,请使用浏览器打开附件)", "plain")
 		if ret == 0 && err == nil {
 			beego.Info("Send email report successfully")
 			return
@@ -428,5 +428,3 @@ func Init() {
 	c.AddFunc(models.SendMysqlSlowlogReportSpec(), sendMysqlSlowlogReport)
 	c.Start()
 }
-
-
