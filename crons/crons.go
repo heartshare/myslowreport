@@ -53,12 +53,11 @@ func createReport() string {
 	slowInfo += `<div style="BORDER-BOTTOM: #FF710C 1px solid; BORDER-LEFT: #FF710C 1px solid; PADDING-BOTTOM: 5px; PADDING-LEFT: 9px; PADDING-RIGHT: 9px; BACKGROUND: #f9f9f9; BORDER-TOP: #FF710C 1px solid; BORDER-RIGHT: #FF710C 1px solid; PADDING-TOP: 5px">`
 	slowInfo += `<div style="PADDING-BOTTOM: 0px; MARGIN: 10px 0px 0px; PADDING-LEFT: 15px; PADDING-RIGHT: 0px; PADDING-TOP: 0px">`
 
+	since := fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02"))
+	until := fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02"))
 	for i, p := range pl {
 		beego.Info(fmt.Sprintf("Start GetOrderByQueryTimeMaxDesc: %s", p.SlowlogTable))
-		cnt, items := models.GetOrderByQueryTimeMaxDesc(
-			fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02")),
-			fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02")),
-			p.SlowlogTable)
+		cnt, items := models.GetOrderByQueryTimeMaxDesc(since, until, p.SlowlogTable)
 		beego.Info(fmt.Sprintf("End GetOrderByQueryTimeMaxDesc: %s, Count: %d", p.SlowlogTable, cnt))
 
 		if cnt == 0 {
@@ -66,8 +65,13 @@ func createReport() string {
 			continue
 		}
 
+		cnt, mi := models.GetMaxOrderBy(since, until, p.SlowlogTable)
+		if cnt == 0 {
+			beego.Info(fmt.Sprintf("No max values: %s", p.SlowlogTable))
+		}
+
 		beego.Info(fmt.Sprintf("Creating report content: %s", p.SlowlogTable))
-		slowInfo += createSlowInfo(items, p, i)
+		slowInfo += createSlowInfo(items, p, i, mi)
 		slowInfo += "<br/>"
 		slowInfo += `<hr style="#FF710C;" />`
 		slowInfo += "<br/>"
@@ -193,7 +197,7 @@ func yoyBasisUniq(table string) int64 {
 		table)
 }
 
-func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
+func createSlowInfo(items []models.Item, p models.Project, tableId int, mi models.MaxItem) string {
 	var info = ""
 
 	info += `<div style="PADDING-BOTTOM: 0px; MARGIN: 10px 0px 0px; PADDING-LEFT: 15px; PADDING-RIGHT: 0px; PADDING-TOP: 0px">`
@@ -271,7 +275,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int) string {
 
 	for _, i := range items {
 		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
-		info += createItem(i, colsWidth, colsName)
+		info += createItem(i, colsWidth, colsName, mi)
 		info += `</tr>`
 	}
 
@@ -301,41 +305,31 @@ func createTableHeader(colWidth string, colName string) string {
 	return tmp
 }
 
-func createIntCol(colName string, colWidth string, val float64) string {
-	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	tmp := defaultItem
+func createCol(colName string, colWidth string, val string, df string) string {
+	tmp := df
 	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
 	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
 	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", val), "0"),"."),-1)
+	tmp  = strings.Replace(tmp, "xxx", val, -1)
 	return tmp
 }
 
-func createFloatCol(colName string, colWidth string, val float64) string {
-	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	tmp := defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
-	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp  = strings.Replace(tmp, "xxx",
-		strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", val), "0"), "."), -1)
-	return tmp
+func floatColString3(val float64) string {
+	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.3f", val), "0"), ".")
 }
 
-func createStringCol(colName string, colWidth string, val string) string {
-	defaultItem := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	tmp := defaultItem
-	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
-	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx", val, -1)
-	return tmp
+func floatColString9(val float64) string {
+	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.9f", val), "0"), ".")
 }
 
-func createItem(item models.Item, colsWidth []string, colsName []string) string {
+func createItem(item models.Item, colsWidth []string, colsName []string, mi models.MaxItem) string {
 	s := ""
 	i := 0
+
+	df := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	//dfMax := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="box-shadow: inset 0px 0px 25px red;BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	dfMax := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+
 
 	tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:200px; min-height: 150px; max-height:180px;">xxx</textarea></td>`
 	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
@@ -344,37 +338,59 @@ func createItem(item models.Item, colsWidth []string, colsName []string) string 
 	s += tmp
 	i++
 
-	s += createIntCol(colsName[i], colsWidth[i], item.TsCnt)
+	tsCntStr := fmt.Sprintf("%d", item.TsCnt)
+	if int64(mi.MaxTsCnt) == int64(item.TsCnt) {
+		s += createCol(colsName[i], colsWidth[i], tsCntStr, dfMax)
+	} else {
+		s += createCol(colsName[i], colsWidth[i], tsCntStr, df)
+	}
 	i++
 
-	s += createStringCol(colsName[i], colsWidth[i], item.UserMax)
+	s += createCol(colsName[i], colsWidth[i], item.UserMax, df)
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMin)
+	s += createCol(colsName[i], colsWidth[i], floatColString3(item.QueryTimeMin), df)
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMax)
+	maxQueryTimeMaxStr := floatColString3(mi.MaxQueryTimeMax)
+	queryTimeMaxStr := floatColString3(item.QueryTimeMax)
+	if strings.Contains(maxQueryTimeMaxStr, queryTimeMaxStr) {
+		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, dfMax)
+	} else {
+		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, df)
+	}
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimePct95)
+	s += createCol(colsName[i], colsWidth[i], floatColString3(item.QueryTimePct95), df)
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.LockTimeMin)
+	s += createCol(colsName[i], colsWidth[i], floatColString9(item.LockTimeMin), df)
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimeMax)
+	maxLockTimeMaxStr := floatColString9(mi.MaxLockTimeMax)
+	lockTimeMaxStr := floatColString9(item.LockTimeMax)
+	if len(maxLockTimeMaxStr) == len(lockTimeMaxStr) && strings.Contains(maxLockTimeMaxStr, lockTimeMaxStr) {
+		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, dfMax)
+	} else {
+		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, df)
+	}
 	i++
 
-	s += createFloatCol(colsName[i], colsWidth[i], item.QueryTimePct95)
+	s += createCol(colsName[i], colsWidth[i], floatColString9(item.LockTimePct95), df)
 	i++
 
-	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedMin)
+	s += createCol(colsName[i], colsWidth[i], fmt.Sprintf("%d", item.RowsExaminedMin), df)
 	i++
 
-	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedMax)
+	rowsExaminedMaxStr := fmt.Sprintf("%d", item.RowsExaminedMax)
+	if int64(mi.MaxRowsExaminedMax) == int64(item.RowsExaminedMax) {
+		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, dfMax)
+	} else {
+		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, df)
+	}
 	i++
 
-	s += createIntCol(colsName[i], colsWidth[i], item.RowsExaminedPct95)
+	s += createCol(colsName[i], colsWidth[i], fmt.Sprintf("%d", item.RowsExaminedPct95), df)
 
 	return s
 }
@@ -391,6 +407,7 @@ func sendMysqlSlowlogReport() {
 			models.MyslowReportMailHost(),
 			models.MyslowReportMailPort(),
 			models.MyslowReportTos(),
+			models.MyslowReportCcs(),
 			models.MyslowReportSubject(),
 			reportFile, "查看详情,请双击打开或者使用浏览器打开附件(推荐使用浏览器打开,Foxmail有些浏览器功能不支持)", "plain")
 		if ret == 0 && err == nil {
@@ -409,4 +426,5 @@ func Init() {
 	c.AddFunc(models.SendMysqlSlowlogReportSpec(), sendMysqlSlowlogReport)
 	c.Start()
 }
+
 

@@ -136,8 +136,8 @@ func myslowReportTodev() string {
 	return beego.AppConfig.String("myslowreport.todev")
 }
 
-func myslowReportToleader() string {
-	return beego.AppConfig.String("myslowreport.toleader")
+func myslowReportCcleader() string {
+	return beego.AppConfig.String("myslowreport.ccleader")
 }
 
 func myslowReportTotest() string {
@@ -161,17 +161,23 @@ func MyslowReportTos() string {
 	toops := strings.TrimRight(strings.TrimLeft(myslowReportToops(), ";"), ";")
 	if len(toops) > 1 {
 		tos += toops
-		tos += ";"
-	}
-
-	toleader := strings.TrimRight(strings.TrimLeft(myslowReportToleader(), ";"), ";")
-	if len(toleader) > 1 {
-		tos += toleader
 	}
 
 	tos = strings.TrimLeft(tos, ";")
 	tos = strings.TrimRight(tos, ";")
 	return fmt.Sprintf("%s", tos)
+}
+
+func MyslowReportCcs() string {
+	ccs := ""
+	ccleader := strings.TrimRight(strings.TrimLeft(myslowReportCcleader(), ";"), ";")
+	if len(ccleader) > 1 {
+		ccs += ccleader
+	}
+
+	ccs = strings.TrimLeft(ccs, ";")
+	ccs = strings.TrimRight(ccs, ";")
+	return fmt.Sprintf("%s", ccs)
 }
 
 func myslowReportCols() string {

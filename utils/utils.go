@@ -162,6 +162,14 @@ func StringToFloat64(s string, defaultValue float64) float64 {
 	return v
 }
 
+func StringToInt64(s string, defaultValue int64) int64 {
+	v, err := strconv.ParseInt(s,10,64)
+	if err != nil {
+		return defaultValue
+	}
+	return v
+}
+
 func SaveReport(file string, content string) {
 	fout, err := os.Create(file)
 	defer fout.Close()

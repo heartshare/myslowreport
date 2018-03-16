@@ -48,17 +48,28 @@ func sendEmailWithAdditionImpl(mailUserAlias string,
 	mailHost string,
 	mailPort string,
 	mailTo string,
+	mailCc string,
 	mailSubject string,
 	reportFile string,
 	body string,
 	mailType string) error {
 
 	m := gomail.NewMessage()
-	m.SetHeaders(map[string][]string{
-		"From":    {m.FormatAddress("kmmp@ktvme.com", mailUserAlias)},
-		"To":      strings.Split(mailTo, ";"),
-		"Subject": {fmt.Sprintf(mailSubject)},
-	})
+	if len(mailCc) > 1 {
+		m.SetHeaders(map[string][]string{
+			"From":    {m.FormatAddress("kmmp@ktvme.com", mailUserAlias)},
+			"To":      strings.Split(mailTo, ";"),
+			"Cc":      strings.Split(mailCc, ";"),
+			"Subject": {fmt.Sprintf(mailSubject)},
+		})
+	} else {
+		m.SetHeaders(map[string][]string{
+			"From":    {m.FormatAddress("kmmp@ktvme.com", mailUserAlias)},
+			"To":      strings.Split(mailTo, ";"),
+			"Subject": {fmt.Sprintf(mailSubject)},
+		})
+	}
+
 	m.SetBody(fmt.Sprintf("text/%s;", mailType), body)
 	m.Attach(reportFile)
 	port, _ := strconv.Atoi(mailPort)
@@ -76,6 +87,7 @@ func SendEmailWithAddition(mailUserAlias string,
 	mailHost string,
 	mailPort string,
 	mailTo string,
+	mailCc string,
 	mailSubject string,
 	reportFile string,
 	body string,
@@ -86,5 +98,5 @@ func SendEmailWithAddition(mailUserAlias string,
 	}
 
 	return 0, sendEmailWithAdditionImpl(mailUserAlias, mailUserName,
-		mailPassWord, mailHost, mailPort, mailTo, mailSubject, reportFile, body, mailType)
+		mailPassWord, mailHost, mailPort, mailTo, mailCc, mailSubject, reportFile, body, mailType)
 }

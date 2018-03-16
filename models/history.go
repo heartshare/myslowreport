@@ -15,7 +15,7 @@ type Item struct {
 
 	TsMin time.Time
 	TsMax time.Time
-	TsCnt float64
+	TsCnt int64
 
 	QueryTimeSum float64
 	QueryTimeMin float64
@@ -31,19 +31,27 @@ type Item struct {
 	LockTimeStddev float64
 	LockTimeMedian float64
 
-	RowsSentSum float64
-	RowsSentMin float64
-	RowsSentMax float64
-	RowsSentPct95 float64
-	RowsSentStddev float64
-	RowsSentMedian float64
+	RowsSentSum int64
+	RowsSentMin int64
+	RowsSentMax int64
+	RowsSentPct95 int64
+	RowsSentStddev int64
+	RowsSentMedian int64
 
-	RowsExaminedSum float64
-	RowsExaminedMin float64
-	RowsExaminedMax float64
-	RowsExaminedPct95 float64
-	RowsExaminedStddev float64
-	RowsExaminedMedian float64
+	RowsExaminedSum int64
+	RowsExaminedMin int64
+	RowsExaminedMax int64
+	RowsExaminedPct95 int64
+	RowsExaminedStddev int64
+	RowsExaminedMedian int64
+}
+
+type MaxItem struct {
+	MaxTsCnt int64
+	MaxQueryTimeMax float64
+	MaxLockTimeMax float64
+	MaxRowsSentMax int64
+	MaxRowsExaminedMax int64
 }
 
 const (
@@ -82,7 +90,14 @@ const (
 	RowsExaminedPct95
 	RowsExaminedStddev
 	RowsExaminedMedian
+)
 
+const (
+	MaxTsCnt = iota
+	MaxQueryTimeMax
+	MaxLockTimeMax
+	MaxRowsSentMax
+	MaxRowsExaminedMax
 )
 
 var tableFields = []string{
@@ -121,11 +136,19 @@ var tableFields = []string{
 	"Rows_examined_pct_95",
 	"Rows_examined_stddev",
 	"Rows_examined_median",
+}
 
+var maxTableFields = []string{
+	"max_ts_cnt",
+	"max_Query_time_max",
+	"max_Lock_time_max",
+	"max_Rows_sent_max",
+	"max_Rows_examined_max",
 }
 
 var defaultStringValue = "Unknown"
 var defaultFloatValue = 0.0
+var defaultIntValue int64 = 0
 var defaultTime = time.Now()
 
 func GetSumOfQueryCount(since string, until string, table string) int64 {
@@ -172,6 +195,148 @@ func GetUniqOfQueryCount(since string, until string, table string) int64 {
 	}
 	
 	return int64(count)
+}
+
+func GetMax(since string, until string, table string) (int64, MaxItem) {
+	retry := DbRetry()
+	sql := fmt.Sprintf("SELECT " +
+
+		"MAX(" + tableFields[TsCnt] + ") AS " + maxTableFields[MaxTsCnt] + "," +
+		"MAX(" + tableFields[QueryTimeMax] + ") AS " + maxTableFields[MaxQueryTimeMax] + "," +
+		"MAX(" + tableFields[LockTimeMax] + ") AS " + maxTableFields[MaxLockTimeMax] + "," +
+		"MAX(" + tableFields[RowsSentMax] + ") AS " + maxTableFields[MaxRowsSentMax] + "," +
+		"MAX(" + tableFields[RowsExaminedMax] + ") AS " + maxTableFields[MaxRowsExaminedMax] +
+
+		" FROM %s WHERE ts_min > '%s' AND ts_max < '%s'",
+
+		table, since, until)
+
+	var count int64
+	var err error
+	var sl []orm.ParamsList
+	var mi MaxItem
+
+	for i := 0; i < retry; i++ {
+		count = 0
+		err = nil
+		count, err = orm.NewOrm().Raw(sql).ValuesList(&sl,
+			maxTableFields[MaxTsCnt],
+			maxTableFields[MaxQueryTimeMax],
+			maxTableFields[MaxLockTimeMax],
+			maxTableFields[MaxRowsSentMax],
+			maxTableFields[MaxRowsExaminedMax])
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when query %s: %s", table, err))
+			continue
+		}
+	}
+
+	if count > 0 {
+		if sl[0][MaxTsCnt] != nil {
+			mi.MaxTsCnt = utils.StringToInt64(sl[0][MaxTsCnt].(string), defaultIntValue)
+		} else {
+			mi.MaxTsCnt = defaultIntValue
+		}
+
+		if sl[0][MaxQueryTimeMax] != nil {
+			mi.MaxQueryTimeMax = utils.StringToFloat64(sl[0][MaxQueryTimeMax].(string), defaultFloatValue)
+		} else {
+			mi.MaxQueryTimeMax = defaultFloatValue
+		}
+
+		if sl[0][MaxLockTimeMax] != nil {
+			mi.MaxLockTimeMax = utils.StringToFloat64(sl[0][MaxLockTimeMax].(string), defaultFloatValue)
+		} else {
+			mi.MaxLockTimeMax = defaultFloatValue
+		}
+
+		if sl[0][MaxRowsSentMax] != nil {
+			mi.MaxRowsSentMax = utils.StringToInt64(sl[0][MaxRowsSentMax].(string), defaultIntValue)
+		} else {
+			mi.MaxRowsSentMax = defaultIntValue
+		}
+
+		if sl[0][MaxRowsExaminedMax] != nil {
+			mi.MaxRowsExaminedMax = utils.StringToInt64(sl[0][MaxRowsExaminedMax].(string), defaultIntValue)
+		} else {
+			mi.MaxRowsExaminedMax = defaultIntValue
+		}
+	}
+
+	return count, mi
+}
+
+func GetMaxOrderBy(since string, until string, table string) (int64, MaxItem) {
+	retry := DbRetry()
+
+	sql := fmt.Sprintf("SELECT * FROM (SELECT %s FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY %s DESC LIMIT 1) AS t1",
+		tableFields[TsCnt], table, since, until, tableFields[TsCnt])
+	sql += " UNION "
+	sql += fmt.Sprintf("SELECT * FROM (SELECT %s FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY %s DESC LIMIT 1) AS t2",
+		tableFields[QueryTimeMax], table, since, until, tableFields[QueryTimeMax])
+	sql += " UNION "
+	sql += fmt.Sprintf("SELECT * FROM (SELECT %s FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY %s DESC LIMIT 1) AS t3",
+		tableFields[LockTimeMax], table, since, until, tableFields[LockTimeMax])
+	sql += " UNION "
+	sql += fmt.Sprintf("SELECT * FROM (SELECT %s FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY %s DESC LIMIT 1) AS t4",
+		tableFields[RowsSentMax], table, since, until, tableFields[RowsSentMax])
+	sql += " UNION "
+	sql += fmt.Sprintf("SELECT * FROM (SELECT %s FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY %s DESC LIMIT 1) AS t5",
+		tableFields[MaxRowsExaminedMax], table, since, until, tableFields[MaxRowsExaminedMax])
+
+	var count int64
+	var err error
+	var sl []orm.ParamsList
+	var mi MaxItem
+
+	for i := 0; i < retry; i++ {
+		count = 0
+		err = nil
+		count, err = orm.NewOrm().Raw(sql).ValuesList(&sl,
+			"ts_cnt")
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when query %s: %s", table, err))
+			continue
+		}
+	}
+
+	if count == 5 {
+		if sl[MaxTsCnt][MaxTsCnt] != nil {
+			mi.MaxTsCnt = utils.StringToInt64(sl[MaxTsCnt][MaxTsCnt].(string), defaultIntValue)
+		} else {
+			mi.MaxTsCnt = defaultIntValue
+		}
+
+		if sl[MaxQueryTimeMax][MaxTsCnt] != nil {
+			mi.MaxQueryTimeMax = utils.StringToFloat64(sl[MaxQueryTimeMax][MaxTsCnt].(string), defaultFloatValue)
+		} else {
+			mi.MaxQueryTimeMax = defaultFloatValue
+		}
+
+		if sl[MaxLockTimeMax][MaxTsCnt] != nil {
+			mi.MaxLockTimeMax = utils.StringToFloat64(sl[MaxLockTimeMax][MaxTsCnt].(string), defaultFloatValue)
+		} else {
+			mi.MaxLockTimeMax = defaultFloatValue
+		}
+
+		if sl[MaxRowsSentMax][MaxTsCnt] != nil {
+			mi.MaxRowsSentMax = utils.StringToInt64(sl[MaxRowsSentMax][MaxTsCnt].(string), defaultIntValue)
+		} else {
+			mi.MaxRowsSentMax = defaultIntValue
+		}
+
+		if sl[MaxRowsExaminedMax][MaxTsCnt] != nil {
+			mi.MaxRowsExaminedMax = utils.StringToInt64(sl[MaxRowsExaminedMax][MaxTsCnt].(string), defaultIntValue)
+		} else {
+			mi.MaxRowsExaminedMax = defaultIntValue
+		}
+	}
+
+	return count, mi
 }
 
 func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64, []Item) {
@@ -306,9 +471,9 @@ func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64
 			}
 
 			if s[TsCnt] != nil {
-				item.TsCnt = utils.StringToFloat64(s[TsCnt].(string), defaultFloatValue)
+				item.TsCnt = utils.StringToInt64(s[TsCnt].(string), defaultIntValue)
 			} else {
-				item.TsCnt = defaultFloatValue
+				item.TsCnt = defaultIntValue
 			}
 
 
@@ -387,76 +552,76 @@ func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64
 
 
 			if s[RowsSentSum] != nil {
-				item.RowsSentSum = utils.StringToFloat64(s[RowsSentSum].(string), defaultFloatValue)
+				item.RowsSentSum = utils.StringToInt64(s[RowsSentSum].(string), defaultIntValue)
 			} else {
-				item.RowsSentSum = defaultFloatValue
+				item.RowsSentSum = defaultIntValue
 			}
 
 			if s[RowsSentMin] != nil {
-				item.RowsSentMin = utils.StringToFloat64(s[RowsSentMin].(string), defaultFloatValue)
+				item.RowsSentMin = utils.StringToInt64(s[RowsSentMin].(string), defaultIntValue)
 			} else {
-				item.RowsSentMin = defaultFloatValue
+				item.RowsSentMin = defaultIntValue
 			}
 
 			if s[RowsSentMax] != nil {
-				item.RowsSentMax = utils.StringToFloat64(s[RowsSentMax].(string), defaultFloatValue)
+				item.RowsSentMax = utils.StringToInt64(s[RowsSentMax].(string), defaultIntValue)
 			} else {
-				item.RowsSentMax = defaultFloatValue
+				item.RowsSentMax = defaultIntValue
 			}
 
 			if s[RowsSentPct95] != nil {
-				item.RowsSentPct95 = utils.StringToFloat64(s[RowsSentPct95].(string), defaultFloatValue)
+				item.RowsSentPct95 = utils.StringToInt64(s[RowsSentPct95].(string), defaultIntValue)
 			} else {
-				item.RowsSentPct95 = defaultFloatValue
+				item.RowsSentPct95 = defaultIntValue
 			}
 
 			if s[RowsSentStddev] != nil {
-				item.RowsSentStddev = utils.StringToFloat64(s[RowsSentStddev].(string), defaultFloatValue)
+				item.RowsSentStddev = utils.StringToInt64(s[RowsSentStddev].(string), defaultIntValue)
 			} else {
-				item.RowsSentStddev = defaultFloatValue
+				item.RowsSentStddev = defaultIntValue
 			}
 
 			if s[RowsSentMedian] != nil {
-				item.RowsSentMedian = utils.StringToFloat64(s[RowsSentMedian].(string), defaultFloatValue)
+				item.RowsSentMedian = utils.StringToInt64(s[RowsSentMedian].(string), defaultIntValue)
 			} else {
-				item.RowsSentMedian = defaultFloatValue
+				item.RowsSentMedian = defaultIntValue
 			}
 
 
 			if s[RowsExaminedSum] != nil {
-				item.RowsExaminedSum = utils.StringToFloat64(s[RowsExaminedSum].(string), defaultFloatValue)
+				item.RowsExaminedSum = utils.StringToInt64(s[RowsExaminedSum].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedSum = defaultFloatValue
+				item.RowsExaminedSum = defaultIntValue
 			}
 
 			if s[RowsExaminedMin] != nil {
-				item.RowsExaminedMin = utils.StringToFloat64(s[RowsExaminedMin].(string), defaultFloatValue)
+				item.RowsExaminedMin = utils.StringToInt64(s[RowsExaminedMin].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMin = defaultFloatValue
+				item.RowsExaminedMin = defaultIntValue
 			}
 
 			if s[RowsExaminedMax] != nil {
-				item.RowsExaminedMax = utils.StringToFloat64(s[RowsExaminedMax].(string), defaultFloatValue)
+				item.RowsExaminedMax = utils.StringToInt64(s[RowsExaminedMax].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMax = defaultFloatValue
+				item.RowsExaminedMax = defaultIntValue
 			}
 
 			if s[RowsExaminedPct95] != nil {
-				item.RowsExaminedPct95 = utils.StringToFloat64(s[RowsExaminedPct95].(string), defaultFloatValue)
+				item.RowsExaminedPct95 = utils.StringToInt64(s[RowsExaminedPct95].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedPct95 = defaultFloatValue
+				item.RowsExaminedPct95 = defaultIntValue
 			}
 
 			if s[RowsExaminedStddev] != nil {
-				item.RowsExaminedStddev = utils.StringToFloat64(s[RowsExaminedStddev].(string), defaultFloatValue)
+				item.RowsExaminedStddev = utils.StringToInt64(s[RowsExaminedStddev].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedStddev = defaultFloatValue
+				item.RowsExaminedStddev = defaultIntValue
 			}
 
 			if s[RowsExaminedMedian] != nil {
-				item.RowsExaminedMedian = utils.StringToFloat64(s[RowsExaminedMedian].(string), defaultFloatValue)
+				item.RowsExaminedMedian = utils.StringToInt64(s[RowsExaminedMedian].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMedian = defaultFloatValue
+				item.RowsExaminedMedian = defaultIntValue
 			}
 
 			il = append(il, item)
@@ -598,9 +763,9 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 			}
 
 			if s[TsCnt] != nil {
-				item.TsCnt = utils.StringToFloat64(s[TsCnt].(string), defaultFloatValue)
+				item.TsCnt = utils.StringToInt64(s[TsCnt].(string), defaultIntValue)
 			} else {
-				item.TsCnt = defaultFloatValue
+				item.TsCnt = defaultIntValue
 			}
 
 
@@ -679,76 +844,76 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 
 
 			if s[RowsSentSum] != nil {
-				item.RowsSentSum = utils.StringToFloat64(s[RowsSentSum].(string), defaultFloatValue)
+				item.RowsSentSum = utils.StringToInt64(s[RowsSentSum].(string), defaultIntValue)
 			} else {
-				item.RowsSentSum = defaultFloatValue
+				item.RowsSentSum = defaultIntValue
 			}
 
 			if s[RowsSentMin] != nil {
-				item.RowsSentMin = utils.StringToFloat64(s[RowsSentMin].(string), defaultFloatValue)
+				item.RowsSentMin = utils.StringToInt64(s[RowsSentMin].(string), defaultIntValue)
 			} else {
-				item.RowsSentMin = defaultFloatValue
+				item.RowsSentMin = defaultIntValue
 			}
 
 			if s[RowsSentMax] != nil {
-				item.RowsSentMax = utils.StringToFloat64(s[RowsSentMax].(string), defaultFloatValue)
+				item.RowsSentMax = utils.StringToInt64(s[RowsSentMax].(string), defaultIntValue)
 			} else {
-				item.RowsSentMax = defaultFloatValue
+				item.RowsSentMax = defaultIntValue
 			}
 
 			if s[RowsSentPct95] != nil {
-				item.RowsSentPct95 = utils.StringToFloat64(s[RowsSentPct95].(string), defaultFloatValue)
+				item.RowsSentPct95 = utils.StringToInt64(s[RowsSentPct95].(string), defaultIntValue)
 			} else {
-				item.RowsSentPct95 = defaultFloatValue
+				item.RowsSentPct95 = defaultIntValue
 			}
 
 			if s[RowsSentStddev] != nil {
-				item.RowsSentStddev = utils.StringToFloat64(s[RowsSentStddev].(string), defaultFloatValue)
+				item.RowsSentStddev = utils.StringToInt64(s[RowsSentStddev].(string), defaultIntValue)
 			} else {
-				item.RowsSentStddev = defaultFloatValue
+				item.RowsSentStddev = defaultIntValue
 			}
 
 			if s[RowsSentMedian] != nil {
-				item.RowsSentMedian = utils.StringToFloat64(s[RowsSentMedian].(string), defaultFloatValue)
+				item.RowsSentMedian = utils.StringToInt64(s[RowsSentMedian].(string), defaultIntValue)
 			} else {
-				item.RowsSentMedian = defaultFloatValue
+				item.RowsSentMedian = defaultIntValue
 			}
 
 
 			if s[RowsExaminedSum] != nil {
-				item.RowsExaminedSum = utils.StringToFloat64(s[RowsExaminedSum].(string), defaultFloatValue)
+				item.RowsExaminedSum = utils.StringToInt64(s[RowsExaminedSum].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedSum = defaultFloatValue
+				item.RowsExaminedSum = defaultIntValue
 			}
 
 			if s[RowsExaminedMin] != nil {
-				item.RowsExaminedMin = utils.StringToFloat64(s[RowsExaminedMin].(string), defaultFloatValue)
+				item.RowsExaminedMin = utils.StringToInt64(s[RowsExaminedMin].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMin = defaultFloatValue
+				item.RowsExaminedMin = defaultIntValue
 			}
 
 			if s[RowsExaminedMax] != nil {
-				item.RowsExaminedMax = utils.StringToFloat64(s[RowsExaminedMax].(string), defaultFloatValue)
+				item.RowsExaminedMax = utils.StringToInt64(s[RowsExaminedMax].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMax = defaultFloatValue
+				item.RowsExaminedMax = defaultIntValue
 			}
 
 			if s[RowsExaminedPct95] != nil {
-				item.RowsExaminedPct95 = utils.StringToFloat64(s[RowsExaminedPct95].(string), defaultFloatValue)
+				item.RowsExaminedPct95 = utils.StringToInt64(s[RowsExaminedPct95].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedPct95 = defaultFloatValue
+				item.RowsExaminedPct95 = defaultIntValue
 			}
 
 			if s[RowsExaminedStddev] != nil {
-				item.RowsExaminedStddev = utils.StringToFloat64(s[RowsExaminedStddev].(string), defaultFloatValue)
+				item.RowsExaminedStddev = utils.StringToInt64(s[RowsExaminedStddev].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedStddev = defaultFloatValue
+				item.RowsExaminedStddev = defaultIntValue
 			}
 
 			if s[RowsExaminedMedian] != nil {
-				item.RowsExaminedMedian = utils.StringToFloat64(s[RowsExaminedMedian].(string), defaultFloatValue)
+				item.RowsExaminedMedian = utils.StringToInt64(s[RowsExaminedMedian].(string), defaultIntValue)
 			} else {
-				item.RowsExaminedMedian = defaultFloatValue
+				item.RowsExaminedMedian = defaultIntValue
 			}
 
 			il = append(il, item)
@@ -757,3 +922,4 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 
 	return count, il
 }
+
