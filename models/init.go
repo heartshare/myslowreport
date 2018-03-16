@@ -7,7 +7,15 @@ import (
 	"net/url"
 	"strings"
 	"fmt"
+	"time"
+	"github.com/shopspring/decimal"
 )
+
+var defaultStringValue = "Unknown"
+var defaultFloatValue = 0.0
+var defaultIntValue int64 = 0
+var defaultTime = time.Now()
+var defaultDecimalValue, _ = decimal.NewFromString("00.00")
 
 type Project struct {
 	MysqlHost string

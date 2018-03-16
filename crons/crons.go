@@ -12,6 +12,7 @@ import (
 	"strings"
 	"strconv"
 	"github.com/ximply/myslowreport/email"
+	"github.com/shopspring/decimal"
 )
 
 func syncMysqlSlowlog() {
@@ -197,6 +198,11 @@ func yoyBasisUniq(table string) int64 {
 		table)
 }
 
+func toMyInsName(ip string, port string) string {
+	return fmt.Sprintf("%s_%s",
+		strings.Replace(ip, ".", "_", -1), port)
+}
+
 func createSlowInfo(items []models.Item, p models.Project, tableId int, mi models.MaxItem) string {
 	var info = ""
 
@@ -224,6 +230,31 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 	yoyBasisRateForUniq := growthRate(yu, yoybu)
 	yoyBasisRateForUniqStr, yoyBasisRateForUniqStrColor := growtRateStrAndColor(yoyBasisRateForUniq, yoybu)
 
+	myInsName := toMyInsName(p.MysqlHost, p.MysqlPort)
+	statDate := fmt.Sprintf("%s 00:00:00", utils.DateString(utils.TodayStringByFormat("2006-01-02")))
+	count, _ := models.GetByMyInsNameAndStatDate(myInsName, statDate)
+	fmt.Println(fmt.Sprintf("GetByMyInsNameAndStatDate Count: %d", count))
+	if count == 0 {
+		gr := models.GrowRate{
+			MyInsName: myInsName,
+			StatDate: utils.Yesterday(),
+
+			YesterdayTotal: yt,
+			BeforeYesterdayTotal: byt,
+			BasisTotal: yoybt,
+
+			YesterdayUniq: yu,
+			BeforeYesterdayUniq: byu,
+			BasisUniq: yoybu,
+
+			TotalChainRate: decimal.NewFromFloat(chainGrowthRateForTotal),
+			TotalBasisRate: decimal.NewFromFloat(yoyBasisRateForTotal),
+
+			UniqChainRate: decimal.NewFromFloat(chainGrowthRateForUniq),
+			UniqBasisRate: decimal.NewFromFloat(yoyBasisRateForUniq),
+		}
+		models.Add(gr)
+	}
 
 	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; TotalCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; TChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYTotal &nbsp;&nbsp;</span></p>`
 	info = strings.Replace(info, "TotalCount", fmt.Sprintf("总语句数: %d", yt), -1)

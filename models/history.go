@@ -146,11 +146,6 @@ var maxTableFields = []string{
 	"max_Rows_examined_max",
 }
 
-var defaultStringValue = "Unknown"
-var defaultFloatValue = 0.0
-var defaultIntValue int64 = 0
-var defaultTime = time.Now()
-
 func GetSumOfQueryCount(since string, until string, table string) int64 {
 	retry := DbRetry()
 	sql := fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s'",

@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 	"strconv"
+	"github.com/shopspring/decimal"
 )
 
 func Substr(str string, start, length int) string {
@@ -149,6 +150,10 @@ func DateStringByFormat(days int, format string) string {
 	return time.Now().AddDate(0, 0, days).Format(format)
 }
 
+func DateString(s string) string {
+	return Substr(s, 0, 10)
+}
+
 func StringToTimeByFormat(s string, format string) time.Time {
 	t, _ := time.Parse(format, s)
 	return t
@@ -164,6 +169,14 @@ func StringToFloat64(s string, defaultValue float64) float64 {
 
 func StringToInt64(s string, defaultValue int64) int64 {
 	v, err := strconv.ParseInt(s,10,64)
+	if err != nil {
+		return defaultValue
+	}
+	return v
+}
+
+func StringToDecimal(s string, defaultValue decimal.Decimal) decimal.Decimal {
+	v, err := decimal.NewFromString(s)
 	if err != nil {
 		return defaultValue
 	}
