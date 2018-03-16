@@ -2,51 +2,19 @@ package email
 
 
 import (
-	"net/smtp"
 	"strings"
 	"github.com/go-gomail/gomail"
 	"strconv"
 	"fmt"
 )
 
-func sendMailImpl(user, password, host, port, from, to, subject, body, mailType string) error{
-	auth := smtp.PlainAuth("", user, password, host)
-	var contentType string
-	if mailType == "html" {
-		contentType = "Content-Type: text/" + mailType + "; charset=UTF-8"
-	} else {
-		contentType = "Content-Type: text/plain" + "; charset=UTF-8"
-	}
-
-	msg := []byte("To: " + to + "\r\nFrom: " + from + "\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
-
-	err := smtp.SendMail(host + ":" + port, auth, user, strings.Split(to, ";"), msg)
-	return err
-}
-
-func SendEmail(mailUserAlias string,
-		mailUserName string,
-		mailPassWord string,
-		mailHost string,
-		mailPort string,
-		mailTo string,
-		mailSubject string,
-		report string,
-		mailType string) (int, error) {
-
-	if len(mailUserAlias) < 1 || len(mailPassWord) < 1 || len(mailHost) < 1 || len(mailPort) < 1 || len(mailTo) < 1 {
-		return -1, nil
-	}
-	
-	return 0, sendMailImpl(mailUserName,
-		mailPassWord, mailHost, mailPort, mailUserAlias, mailTo, mailSubject, report, mailType)
-}
-
-func sendEmailWithAdditionImpl(mailUserAlias string,
+func sendEmailWithAdditionImpl(
 	mailUserName string,
 	mailPassWord string,
 	mailHost string,
 	mailPort string,
+	mailFrom string,
+	mailFromAlias string,
 	mailTo string,
 	mailCc string,
 	mailSubject string,
@@ -57,14 +25,14 @@ func sendEmailWithAdditionImpl(mailUserAlias string,
 	m := gomail.NewMessage()
 	if len(mailCc) > 1 {
 		m.SetHeaders(map[string][]string{
-			"From":    {m.FormatAddress("kmmp@ktvme.com", mailUserAlias)},
+			"From":    {m.FormatAddress(mailFrom, mailFromAlias)},
 			"To":      strings.Split(mailTo, ";"),
 			"Cc":      strings.Split(mailCc, ";"),
 			"Subject": {fmt.Sprintf(mailSubject)},
 		})
 	} else {
 		m.SetHeaders(map[string][]string{
-			"From":    {m.FormatAddress("kmmp@ktvme.com", mailUserAlias)},
+			"From":    {m.FormatAddress(mailFrom, mailFromAlias)},
 			"To":      strings.Split(mailTo, ";"),
 			"Subject": {fmt.Sprintf(mailSubject)},
 		})
@@ -81,11 +49,13 @@ func sendEmailWithAdditionImpl(mailUserAlias string,
 	return nil
 }
 
-func SendEmailWithAddition(mailUserAlias string,
+func SendEmailWithAddition(
 	mailUserName string,
 	mailPassWord string,
 	mailHost string,
 	mailPort string,
+	mailFrom string,
+	mailFromAlias string,
 	mailTo string,
 	mailCc string,
 	mailSubject string,
@@ -93,10 +63,25 @@ func SendEmailWithAddition(mailUserAlias string,
 	body string,
 	mailType string) (int, error) {
 
-	if len(mailUserAlias) < 1 || len(mailPassWord) < 1 || len(mailHost) < 1 || len(mailPort) < 1 || len(mailTo) < 1 {
+	if len(mailPassWord) < 1 ||
+		len(mailHost) < 1 ||
+	 	len(mailPort) < 1 ||
+	 	len(mailFrom) < 1 ||
+	 	len(mailTo) < 1 {
 		return -1, nil
 	}
 
-	return 0, sendEmailWithAdditionImpl(mailUserAlias, mailUserName,
-		mailPassWord, mailHost, mailPort, mailTo, mailCc, mailSubject, reportFile, body, mailType)
+	return 0, sendEmailWithAdditionImpl(
+		mailUserName,
+		mailPassWord,
+		mailHost,
+		mailPort,
+		mailFrom,
+		mailFromAlias,
+		mailTo,
+		mailCc,
+		mailSubject,
+		reportFile,
+		body,
+		mailType)
 }

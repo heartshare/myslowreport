@@ -401,11 +401,13 @@ func sendMysqlSlowlogReport() {
 	utils.SaveReport(reportFile, slowInfo)
 	retry := models.MyslowReportRetry()
 	for i := 0; i < retry; i++ {
-		ret, err := email.SendEmailWithAddition(models.MyslowReportFrom(),
+		ret, err := email.SendEmailWithAddition(
 			models.MyslowReportMailUserName(),
 			models.MyslowReportMailPassword(),
 			models.MyslowReportMailHost(),
 			models.MyslowReportMailPort(),
+			models.MyslowReportFrom(),
+			models.MyslowReportFromAlias(),
 			models.MyslowReportTos(),
 			models.MyslowReportCcs(),
 			models.MyslowReportSubject(),

@@ -108,6 +108,10 @@ func MyslowReportFrom() string {
 	return beego.AppConfig.String("myslowreport.from")
 }
 
+func MyslowReportFromAlias() string {
+	return beego.AppConfig.String("myslowreport.fromalias")
+}
+
 func MyslowReportMailUserName() string {
 	return beego.AppConfig.String("myslowreport.mailusername")
 }
