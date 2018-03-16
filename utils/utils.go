@@ -175,12 +175,40 @@ func StringToInt64(s string, defaultValue int64) int64 {
 	return v
 }
 
-func StringToDecimal(s string, defaultValue decimal.Decimal) decimal.Decimal {
-	v, err := decimal.NewFromString(s)
+func InterfaceStringToInt64(s interface{}, defaultValue int64) int64 {
+	if s == nil {
+		return defaultValue
+	}
+	v, err := strconv.ParseInt(s.(string),10,64)
 	if err != nil {
 		return defaultValue
 	}
 	return v
+}
+
+func InterfaceStringToDecimal(s interface{}, defaultValue decimal.Decimal) decimal.Decimal {
+	if s == nil {
+		return defaultValue
+	}
+	v, err := decimal.NewFromString(s.(string))
+	if err != nil {
+		return defaultValue
+	}
+	return v
+}
+
+func InterfaceStringToTimeByFormat(s interface{}, format string, defaultValue time.Time) time.Time {
+	if s == nil {
+		return defaultValue
+	}
+	return StringToTimeByFormat(s.(string), format)
+}
+
+func InterfaceStringToString(s interface{}, defaultValue string) string {
+	if s == nil {
+		return defaultValue
+	}
+	return s.(string)
 }
 
 func SaveReport(file string, content string) {

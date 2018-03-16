@@ -150,3 +150,24 @@ MODIFY COLUMN Rows_examined_stddev bigint(20) unsigned DEFAULT '0',
 MODIFY COLUMN Rows_examined_median bigint(20) unsigned DEFAULT '0'
 ;
 ```
+
+增加增长率统计表
+```Java
+CREATE TABLE `myslow_history_grow_rate` (
+	`Id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Id(自增量)',
+	`MyInsName` VARCHAR(64) NOT NULL COMMENT 'MySQL实例名称',
+	`StatDate` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT '统计日期',
+	`YesterdayTotal` int(11) NOT NULL DEFAULT '0' COMMENT '昨天的慢日志总数',
+	`BeforeYesterdayTotal` int(11) NOT NULL DEFAULT '0' COMMENT '前天的慢日志总数',
+	`BasisTotal` int(11) NOT NULL DEFAULT '0' COMMENT '上周此日的慢日志总数',
+	`YesterdayUniq` int(11) NOT NULL DEFAULT '0' COMMENT '昨天的慢日志独立数',
+	`BeforeYesterdayUniq` int(11) NOT NULL DEFAULT '0' COMMENT '前天的慢日志独立数',
+	`BasisUniq` int(11) NOT NULL DEFAULT '0' COMMENT '上周此日的慢日志独立数',
+	`TotalChainRate` DECIMAL(10,2) COMMENT '总慢日志语句数环比增长',
+	`TotalBasisRate` DECIMAL(10,2) COMMENT '总慢日志语句数同比增长',
+	`UniqChainRate` DECIMAL(10,2) COMMENT '独立慢日志语句数环比增长',
+	`UniqBasisRate` DECIMAL(10,2) COMMENT '独立慢日志语句数同比增长',
+	PRIMARY KEY (`Id`),
+	UNIQUE KEY `idx_MyInsName_StatDate` (`MyInsName`,`StatDate`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```

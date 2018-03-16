@@ -231,9 +231,9 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 	yoyBasisRateForUniqStr, yoyBasisRateForUniqStrColor := growtRateStrAndColor(yoyBasisRateForUniq, yoybu)
 
 	myInsName := toMyInsName(p.MysqlHost, p.MysqlPort)
-	statDate := fmt.Sprintf("%s 00:00:00", utils.DateString(utils.TodayStringByFormat("2006-01-02")))
+	statDate := fmt.Sprintf("%s 00:00:00", utils.DateString(utils.YesterdayStringByFormat("2006-01-02")))
 	count, _ := models.GetByMyInsNameAndStatDate(myInsName, statDate)
-	fmt.Println(fmt.Sprintf("GetByMyInsNameAndStatDate Count: %d", count))
+
 	if count == 0 {
 		gr := models.GrowRate{
 			MyInsName: myInsName,
@@ -370,7 +370,7 @@ func createItem(item models.Item, colsWidth []string, colsName []string, mi mode
 	i++
 
 	tsCntStr := fmt.Sprintf("%d", item.TsCnt)
-	if int64(mi.MaxTsCnt) == int64(item.TsCnt) {
+	if mi.MaxTsCnt == item.TsCnt {
 		s += createCol(colsName[i], colsWidth[i], tsCntStr, dfMax)
 	} else {
 		s += createCol(colsName[i], colsWidth[i], tsCntStr, df)
@@ -380,41 +380,45 @@ func createItem(item models.Item, colsWidth []string, colsName []string, mi mode
 	s += createCol(colsName[i], colsWidth[i], item.UserMax, df)
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], floatColString3(item.QueryTimeMin), df)
+	f1, _ := item.QueryTimeMin.Float64()
+	s += createCol(colsName[i], colsWidth[i], floatColString3(f1), df)
 	i++
 
-	maxQueryTimeMaxStr := floatColString3(mi.MaxQueryTimeMax)
-	queryTimeMaxStr := floatColString3(item.QueryTimeMax)
-	if strings.Contains(maxQueryTimeMaxStr, queryTimeMaxStr) {
+	f2, _ := item.QueryTimeMax.Float64()
+	queryTimeMaxStr := floatColString3(f2)
+	if mi.MaxQueryTimeMax.Equal(item.QueryTimeMax) {
 		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, dfMax)
 	} else {
 		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, df)
 	}
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], floatColString3(item.QueryTimePct95), df)
+	f3, _ := item.QueryTimePct95.Float64()
+	s += createCol(colsName[i], colsWidth[i], floatColString3(f3), df)
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], floatColString9(item.LockTimeMin), df)
+	f4, _ := item.LockTimeMin.Float64()
+	s += createCol(colsName[i], colsWidth[i], floatColString9(f4), df)
 	i++
 
-	maxLockTimeMaxStr := floatColString9(mi.MaxLockTimeMax)
-	lockTimeMaxStr := floatColString9(item.LockTimeMax)
-	if len(maxLockTimeMaxStr) == len(lockTimeMaxStr) && strings.Contains(maxLockTimeMaxStr, lockTimeMaxStr) {
+	f5, _ := item.LockTimeMax.Float64()
+	lockTimeMaxStr := floatColString9(f5)
+	if mi.MaxLockTimeMax.Equal(item.LockTimeMax) {
 		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, dfMax)
 	} else {
 		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, df)
 	}
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], floatColString9(item.LockTimePct95), df)
+	f6, _ := item.LockTimePct95.Float64()
+	s += createCol(colsName[i], colsWidth[i], floatColString9(f6), df)
 	i++
 
 	s += createCol(colsName[i], colsWidth[i], fmt.Sprintf("%d", item.RowsExaminedMin), df)
 	i++
 
 	rowsExaminedMaxStr := fmt.Sprintf("%d", item.RowsExaminedMax)
-	if int64(mi.MaxRowsExaminedMax) == int64(item.RowsExaminedMax) {
+	if mi.MaxRowsExaminedMax == item.RowsExaminedMax {
 		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, dfMax)
 	} else {
 		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, df)
