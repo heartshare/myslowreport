@@ -115,3 +115,38 @@ CREATE TABLE `myslow_history_10_120_3306` (
   KEY `idx_query_time_max` (`Query_time_max`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
+
+哎, 浮点数是个罪孽, 修改部分字段类型为decimal 或者 bigint
+```Java
+ALTER TABLE myslow_history_10_120_3306
+MODIFY COLUMN ts_cnt bigint(20) unsigned DEFAULT '0',
+
+MODIFY COLUMN Query_time_sum decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Query_time_min decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Query_time_max decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Query_time_pct_95 decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Query_time_stddev decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Query_time_median decimal(12,9) DEFAULT '0.0',
+
+MODIFY COLUMN Lock_time_sum decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Lock_time_min decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Lock_time_max decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Lock_time_pct_95 decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Lock_time_stddev decimal(12,9) DEFAULT '0.0',
+MODIFY COLUMN Lock_time_median decimal(12,9) DEFAULT '0.0',
+
+MODIFY COLUMN Rows_sent_sum bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_sent_min bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_sent_max bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_sent_pct_95 bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_sent_stddev bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_sent_median bigint(20) unsigned DEFAULT '0',
+
+MODIFY COLUMN Rows_examined_sum bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_examined_min bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_examined_max bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_examined_pct_95 bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_examined_stddev bigint(20) unsigned DEFAULT '0',
+MODIFY COLUMN Rows_examined_median bigint(20) unsigned DEFAULT '0'
+;
+```
