@@ -6,6 +6,7 @@ import (
 	"time"
 	"strconv"
 	"github.com/shopspring/decimal"
+	"io/ioutil"
 )
 
 func Substr(str string, start, length int) string {
@@ -154,25 +155,13 @@ func DateString(s string) string {
 	return Substr(s, 0, 10)
 }
 
+func YearMonthStringByFormat(t time.Time, format string) string {
+	return Substr(t.Format(format), 0, 6)
+}
+
 func StringToTimeByFormat(s string, format string) time.Time {
 	t, _ := time.Parse(format, s)
 	return t
-}
-
-func StringToFloat64(s string, defaultValue float64) float64 {
-	v, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return defaultValue
-	}
-	return v
-}
-
-func StringToInt64(s string, defaultValue int64) int64 {
-	v, err := strconv.ParseInt(s,10,64)
-	if err != nil {
-		return defaultValue
-	}
-	return v
 }
 
 func InterfaceStringToInt64(s interface{}, defaultValue int64) int64 {
@@ -218,4 +207,22 @@ func SaveReport(file string, content string) {
 		return
 	}
 	fout.Write([]byte(content))
+}
+
+func Appendfile(src string, dst string) error {
+	fd, err := os.OpenFile(dst, os.O_RDWR | os.O_CREATE | os.O_APPEND,0644)
+	defer fd.Close()
+	if err != err {
+		return err
+	}
+
+	b, err := ioutil.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	fd.Write(b)
+	fd.Close()
+
+	return nil
 }
