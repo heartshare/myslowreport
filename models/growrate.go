@@ -148,7 +148,7 @@ func GetByMyInsNameAndStatDate(name string, date string) (int64, GrowRate) {
 	return count, gr
 }
 
-func Add(gr GrowRate) int64 {
+func AddGrowRate(gr GrowRate) int64 {
 	sql := fmt.Sprintf("INSERT INTO " +
 		tableName() + " " +
 		"(" +
