@@ -15,26 +15,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func syncMysqlSlowlog() {
-	pl := models.MyslowReportProjectsList()
-	for _, p := range pl {
-		beego.Info(fmt.Sprintf("Start SyncMysqlSlowlogFile: %s, %s", p.MysqlHost, p.MysqlSlowlogFileName))
-		file := rsync.SyncMysqlSlowlogFile(
-			p.MysqlHost,
-			p.MysqlPort,
-			p.RsyncModel,
-			p.MysqlSlowlogFileName,
-			models.MyslowReportSlowlogpath())
-		beego.Info(fmt.Sprintf("End SyncMysqlSlowlogFile: %s, %s", p.MysqlHost, p.MysqlSlowlogFileName))
-
-		if !perconatoolkit.ImportMysqlSlowlogHistoryToMysql(file, p.SlowlogTable) {
-			beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql fail: %s, %s", file, p.SlowlogTable))
-			continue
-		}
-		beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql successfully: %s, %s", file, p.SlowlogTable))
-	}
-}
-
 func createReport() string {
 	pl := models.MyslowReportProjectsList()
 	slowInfo := ""
@@ -253,7 +233,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 			UniqChainRate: decimal.NewFromFloat(chainGrowthRateForUniq),
 			UniqBasisRate: decimal.NewFromFloat(yoyBasisRateForUniq),
 		}
-		models.Add(gr)
+		models.AddGrowRate(gr)
 	}
 
 	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; TotalCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; TChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYTotal &nbsp;&nbsp;</span></p>`
@@ -430,7 +410,50 @@ func createItem(item models.Item, colsWidth []string, colsName []string, mi mode
 	return s
 }
 
-func sendMysqlSlowlogReport() {
+func syncMysqlDailySlowlog() {
+	pl := models.MyslowReportProjectsList()
+	slowlogPath := models.MyslowReportSlowlogpath()
+	slowlogMonthlyPath := models.MyslowReportSlowlogMonthltPath()
+	for _, p := range pl {
+		beego.Info(fmt.Sprintf("Start SyncMysqlSlowlogFile: %s, %s", p.MysqlHost, p.MysqlSlowlogFileName))
+		file := rsync.SyncMysqlSlowlogFile(
+			p.MysqlHost,
+			p.MysqlPort,
+			p.RsyncModel,
+			p.MysqlSlowlogFileName,
+			slowlogPath)
+		beego.Info(fmt.Sprintf("End SyncMysqlSlowlogFile: %s, %s", p.MysqlHost, p.MysqlSlowlogFileName))
+
+		err := rsync.MergeMysqlSlowlogFile(p.MysqlHost, p.MysqlPort, slowlogPath, slowlogMonthlyPath)
+		if err != nil {
+			beego.Info(fmt.Sprintf("MergeMysqlSlowlogFile fail: %s, %s", p.SlowlogTable, err.Error()))
+		}
+
+		if !perconatoolkit.ImportMysqlSlowlogHistoryToMysql(file, p.SlowlogTable) {
+			beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql fail: %s, %s", file, p.SlowlogTable))
+			continue
+		}
+		beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql successfully: %s, %s", file, p.SlowlogTable))
+	}
+}
+
+func importMysqlMonthlySlowlog() {
+	pl := models.MyslowReportProjectsList()
+	slowlogMonthlyPath := models.MyslowReportSlowlogMonthltPath()
+	for _, p := range pl {
+		monthFile := fmt.Sprintf("%s%s.%s.%s", slowlogMonthlyPath, p.MysqlHost, p.MysqlPort,
+			utils.YearMonthStringByFormat(utils.Yesterday(), "20060102"))
+		monthlyTable := fmt.Sprintf("%s_monthly", p.SlowlogTable)
+
+		if !perconatoolkit.ImportMysqlSlowlogHistoryToMysql(monthFile, monthlyTable) {
+			beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql fail: %s, %s", monthFile, monthlyTable))
+			continue
+		}
+		beego.Info(fmt.Sprintf("ImportMysqlSlowlogHistoryToMysql successfully: %s, %s", monthFile, monthlyTable))
+	}
+}
+
+func sendMysqlSlowlogDailyReport() {
 	slowInfo := createReport()
 	reportFile := fmt.Sprintf("./report/%s.html", utils.YesterdayString())
 	utils.SaveReport(reportFile, slowInfo)
@@ -446,7 +469,7 @@ func sendMysqlSlowlogReport() {
 			models.MyslowReportTos(),
 			models.MyslowReportCcs(),
 			models.MyslowReportSubject(),
-			reportFile, "查看详情,请使用浏览器打开附件)", "plain")
+			reportFile, "查看详情,请使用浏览器打开附件", "plain")
 		if ret == 0 && err == nil {
 			beego.Info("Send email report successfully")
 			return
@@ -459,7 +482,8 @@ func sendMysqlSlowlogReport() {
 
 func Init() {
 	c := cron.New()
-	c.AddFunc(models.SyncMysqlSlowlogSpec(), syncMysqlSlowlog)
-	c.AddFunc(models.SendMysqlSlowlogReportSpec(), sendMysqlSlowlogReport)
+	c.AddFunc(models.SyncMysqlSlowlogSpec(), syncMysqlDailySlowlog)
+	c.AddFunc(models.SendMysqlSlowlogReportSpec(), sendMysqlSlowlogDailyReport)
+	c.AddFunc(models.ImportMysqlSlowlogMonthlySpec(), importMysqlMonthlySlowlog)
 	c.Start()
 }
