@@ -6,6 +6,7 @@ import (
 	"github.com/go-gomail/gomail"
 	"strconv"
 	"fmt"
+	"github.com/ximply/myslowreport/utils"
 )
 
 func sendEmailWithAdditionImpl(
@@ -39,7 +40,12 @@ func sendEmailWithAdditionImpl(
 	}
 
 	m.SetBody(fmt.Sprintf("text/%s;", mailType), body)
-	m.Attach(reportFile)
+	fileList := strings.Split(reportFile, ";")
+	for _, f := range fileList {
+		if utils.FileExists(f) {
+			m.Attach(f)
+		}
+	}
 	port, _ := strconv.Atoi(mailPort)
 	d := gomail.NewDialer(mailHost, port, mailUserName, mailPassWord)
 	if err := d.DialAndSend(m); err != nil {
