@@ -96,6 +96,10 @@ func SendMysqlSlowlogReportSpec() string {
 	return beego.AppConfig.String("myslowreport.sendreportemailspec")
 }
 
+func ImportMysqlSlowlogMonthlySpec() string {
+	return beego.AppConfig.String("myslowreport.importmonthlyspec")
+}
+
 func MyslowReportRetry() int {
 	retry, err := beego.AppConfig.Int("myslowreport.retry")
 	if err != nil {
@@ -232,6 +236,10 @@ func MyslowReportProjectsList() []Project {
 
 func MyslowReportSlowlogpath() string {
 	return beego.AppConfig.String("myslowreport.slowlogpath")
+}
+
+func MyslowReportSlowlogMonthltPath() string {
+	return beego.AppConfig.String("myslowreport.slowlogmonthlypath")
 }
 
 func MyslowReportPtQueryDigest() string {
