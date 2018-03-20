@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
+	"os/exec"
+	"fmt"
 )
 
 func Substr(str string, start, length int) string {
@@ -156,7 +158,16 @@ func DateString(s string) string {
 }
 
 func YearMonthStringByFormat(t time.Time, format string) string {
+	if strings.Contains(format, "-") {
+		return Substr(t.Format(format), 0, 7)
+	}
 	return Substr(t.Format(format), 0, 6)
+}
+
+func FirstDayOfMonth(t time.Time) bool {
+	ds := DateString(t.Format("20060102"))
+	i, _ := strconv.Atoi(Substr(ds, 6, 2))
+	return i == 1
 }
 
 func StringToTimeByFormat(s string, format string) time.Time {
@@ -225,4 +236,11 @@ func Appendfile(src string, dst string) error {
 	fd.Close()
 
 	return nil
+}
+
+func TarFile(src string, dst string, dir string) {
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("cd %s;tar -czf %s %s", dir, dst, src))
+	cmd.Start()
+	cmd.Run()
+	cmd.Wait()
 }
