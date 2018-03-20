@@ -26,6 +26,23 @@ type Project struct {
 	MysqlSlowlogFileName string
 }
 
+type MyInsChargeInfo struct {
+	MyInsName string
+	Desc string
+	Charge string
+}
+
+type TraceSheetInfo struct {
+	SheetName string
+	MyInsChargeInfoList []MyInsChargeInfo
+}
+
+type TraceColInfo struct {
+	ColName string
+	ColCellName string
+	ColCellAlapha string
+}
+
 func Init() {
 	dbhost := beego.AppConfig.String("db.host")
 	dbport := beego.AppConfig.String("db.port")
@@ -244,4 +261,54 @@ func MyslowReportSlowlogMonthltPath() string {
 
 func MyslowReportPtQueryDigest() string {
 	return beego.AppConfig.String("myslowreport.ptquerydigest")
+}
+
+func MyslowReportTraceSheetInfoList() []TraceSheetInfo {
+	l := []TraceSheetInfo{}
+	s := beego.AppConfig.String("myslowreport.tracesheets")
+	sl1 := strings.Split(s, "|")
+	for _, s1 := range sl1 {
+		items := strings.Split(s1, ";")
+		// the first one is sheet name
+		tsi := TraceSheetInfo{}
+		myl := []MyInsChargeInfo{}
+
+		tsi.SheetName = items[0]
+		for i, v := range items {
+			if i == 0 {
+				continue
+			}
+
+			mylItems := strings.Split(v, ",")
+			if len(mylItems) != 3 {
+				continue
+			}
+			myi := MyInsChargeInfo{
+				MyInsName: mylItems[0],
+				Desc: mylItems[1],
+				Charge: strings.Replace(mylItems[2], "#", " ", -1),
+			}
+			myl = append(myl, myi)
+		}
+		tsi.MyInsChargeInfoList = myl
+		l = append(l, tsi)
+	}
+
+	return l
+}
+
+func MyslowReportTraceCols() []TraceColInfo {
+	l := []TraceColInfo{}
+	s := beego.AppConfig.String("myslowreport.tracecols")
+	tl := strings.Split(s, "|")
+	intForASCIIA := 65
+	for i, v := range tl {
+		item := TraceColInfo{
+			ColName: v,
+			ColCellName: fmt.Sprintf("%s1", string(i + intForASCIIA)),
+			ColCellAlapha: fmt.Sprintf("%s", string(i + intForASCIIA)),
+		}
+		l = append(l, item)
+	}
+	return l
 }
