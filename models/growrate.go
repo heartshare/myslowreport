@@ -30,6 +30,22 @@ type GrowRate struct {
 	UniqBasisRate decimal.Decimal
 }
 
+type GrowRateMonthly struct {
+	Id int64
+
+	MyInsName string
+	StatDate time.Time
+
+	LastMonthTotal int64
+	LastLastMonthTotal int64
+
+	LastMonthUniq int64
+	LastLastMonthUniq int64
+
+	TotalChainRate decimal.Decimal
+	UniqChainRate decimal.Decimal
+}
+
 const (
 	Id = iota
 	MyInsName
@@ -48,6 +64,22 @@ const (
 
 	UniqChainRate
 	UniqBasisRate
+)
+
+const (
+	IdM = iota
+
+	MyInsNameM
+	StatDateM
+
+	LastMonthTotalM
+	LastLastMonthTotalM
+
+	LastMonthUniqM
+	LastLastMonthUniqM
+
+	TotalChainRateM
+	UniqChainRateM
 )
 
 var tableGrowRateFields = []string{
@@ -72,8 +104,28 @@ var tableGrowRateFields = []string{
 
 }
 
+var tableGrowRateMonthlyFields = []string{
+	"Id",
+
+	"MyInsName",
+	"StatDate",
+
+	"LastMonthTotal",
+	"LastLastMonthTotal",
+
+	"LastMonthUniq",
+	"LastLastMonthUniq",
+
+	"TotalChainRate",
+	"UniqChainRate",
+}
+
 func tableName() string {
 	return "myslow_history_grow_rate"
+}
+
+func tableMonthlyName() string {
+	return "myslow_history_grow_rate_monthly"
 }
 
 func GetByMyInsNameAndStatDate(name string, date string) (int64, GrowRate) {
@@ -148,6 +200,66 @@ func GetByMyInsNameAndStatDate(name string, date string) (int64, GrowRate) {
 	return count, gr
 }
 
+func GetByMyInsNameAndStatDateMonthly(name string, date string) (int64, GrowRateMonthly) {
+	retry := DbRetry()
+	sql := fmt.Sprintf("SELECT " +
+		tableGrowRateMonthlyFields[IdM] + ", " +
+		tableGrowRateMonthlyFields[MyInsNameM] + ", " +
+		tableGrowRateMonthlyFields[StatDateM] + ", " +
+		tableGrowRateMonthlyFields[LastMonthTotalM] + ", " +
+		tableGrowRateMonthlyFields[LastLastMonthTotalM] + ", " +
+		tableGrowRateMonthlyFields[LastMonthUniqM] + ", " +
+		tableGrowRateMonthlyFields[LastLastMonthUniqM] + ", " +
+		tableGrowRateMonthlyFields[TotalChainRateM] + ", " +
+		tableGrowRateMonthlyFields[UniqChainRateM] + " " +
+		" FROM %s WHERE %s = '%s' AND %s = '%s'",
+
+		tableMonthlyName(), tableGrowRateMonthlyFields[MyInsNameM], name, tableGrowRateMonthlyFields[StatDateM], date)
+
+	var count int64
+	var err error
+	var sl []orm.ParamsList
+	var grm GrowRateMonthly
+	fmt.Println(sql)
+	for i := 0; i < retry; i++ {
+		count = 0
+		err = nil
+		count, err = orm.NewOrm().Raw(sql).ValuesList(&sl,
+			tableGrowRateMonthlyFields[IdM],
+			tableGrowRateMonthlyFields[MyInsNameM],
+			tableGrowRateMonthlyFields[StatDateM],
+			tableGrowRateMonthlyFields[LastMonthTotalM],
+			tableGrowRateMonthlyFields[LastLastMonthTotalM],
+			tableGrowRateMonthlyFields[LastMonthUniqM],
+			tableGrowRateMonthlyFields[LastLastMonthUniqM],
+			tableGrowRateMonthlyFields[TotalChainRateM],
+			tableGrowRateMonthlyFields[UniqChainRateM])
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when query %s: %s", tableMonthlyName(), err))
+			continue
+		}
+	}
+
+	if count > 0 {
+		grm.Id = utils.InterfaceStringToInt64(sl[0][IdM], defaultIntValue)
+		grm.MyInsName = utils.InterfaceStringToString(sl[0][MyInsNameM], defaultStringValue)
+		grm.StatDate = utils.InterfaceStringToTimeByFormat(sl[0][StatDateM], "2006-01-02", defaultTime)
+
+		grm.LastMonthTotal = utils.InterfaceStringToInt64(sl[0][LastMonthTotalM], defaultIntValue)
+		grm.LastLastMonthTotal = utils.InterfaceStringToInt64(sl[0][LastLastMonthTotalM], defaultIntValue)
+
+		grm.LastMonthUniq = utils.InterfaceStringToInt64(sl[0][LastMonthUniqM], defaultIntValue)
+		grm.LastLastMonthUniq = utils.InterfaceStringToInt64(sl[0][LastLastMonthUniqM], defaultIntValue)
+
+		grm.TotalChainRate = utils.InterfaceStringToDecimal(sl[0][TotalChainRateM], defaultDecimalValue)
+		grm.UniqChainRate = utils.InterfaceStringToDecimal(sl[0][UniqChainRateM].(string), defaultDecimalValue)
+	}
+
+	return count, grm
+}
+
 func AddGrowRate(gr GrowRate) int64 {
 	sql := fmt.Sprintf("INSERT INTO " +
 		tableName() + " " +
@@ -177,6 +289,55 @@ func AddGrowRate(gr GrowRate) int64 {
 		fmt.Sprintf("%s", gr.TotalBasisRate.String()) + ", " +
 		fmt.Sprintf("%s", gr.UniqChainRate.String()) + ", " +
 		fmt.Sprintf("%s", gr.UniqBasisRate.String()) + " " +
+		")")
+
+	var rowsAffected int64 = 0
+	retry := DbRetry()
+	for i := 0; i < retry; i++ {
+		p, err := orm.NewOrm().Raw(sql).Prepare()
+		if err != nil {
+			beego.Info(fmt.Sprintf("Add error(Prepare): %s", err.Error()))
+			continue
+		}
+		res, err := p.Exec()
+		if err != nil {
+			beego.Info(fmt.Sprintf("Add error(Exec): %s", err.Error()))
+			continue
+		}
+
+		i, err := res.RowsAffected()
+		rowsAffected = i
+		if err != nil {
+			beego.Info(fmt.Sprintf("Add error(RowsAffected): %s", err.Error()))
+			continue
+		}
+		break
+	}
+
+	return rowsAffected
+}
+
+func AddGrowRateMonthly(grm GrowRateMonthly) int64 {
+	sql := fmt.Sprintf("INSERT INTO " +
+		tableMonthlyName() + " " +
+		"(" +
+		tableGrowRateMonthlyFields[MyInsNameM] + ", " +
+		tableGrowRateMonthlyFields[StatDateM] + ", " +
+		tableGrowRateMonthlyFields[LastMonthTotalM] + ", " +
+		tableGrowRateMonthlyFields[LastLastMonthTotalM] + ", " +
+		tableGrowRateMonthlyFields[LastMonthUniqM] + ", " +
+		tableGrowRateMonthlyFields[LastLastMonthUniqM] + ", " +
+		tableGrowRateMonthlyFields[TotalChainRateM] + ", " +
+		tableGrowRateMonthlyFields[UniqChainRateM] + " " +
+		") VALUES (" +
+		fmt.Sprintf("'%s'", grm.MyInsName) + ", " +
+		fmt.Sprintf("'%s-01 00:00:00'", utils.YearMonthStringByFormat(grm.StatDate, "2006-01-02")) + ", " +
+		fmt.Sprintf("%d", grm.LastMonthTotal) + ", " +
+		fmt.Sprintf("%d", grm.LastLastMonthTotal) + ", " +
+		fmt.Sprintf("%d", grm.LastMonthUniq) + ", " +
+		fmt.Sprintf("%d", grm.LastLastMonthUniq) + ", " +
+		fmt.Sprintf("%s", grm.TotalChainRate.String()) + ", " +
+		fmt.Sprintf("%s", grm.UniqChainRate.String()) + " " +
 		")")
 
 	var rowsAffected int64 = 0
