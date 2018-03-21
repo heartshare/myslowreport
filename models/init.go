@@ -312,3 +312,8 @@ func MyslowReportTraceCols() []TraceColInfo {
 	}
 	return l
 }
+
+func MyslowReportIgnoreDbUsers() []string {
+	s := beego.AppConfig.String("myslowreport.ignoredbusers")
+	return strings.Split(s, "|")
+}
