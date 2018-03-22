@@ -10,7 +10,6 @@ import (
 	"github.com/ximply/myslowreport/utils"
 	"github.com/astaxie/beego"
 	"strings"
-	"strconv"
 	"github.com/ximply/myslowreport/email"
 	"github.com/shopspring/decimal"
 	"github.com/360EntSecGroup-Skylar/excelize"
@@ -59,7 +58,7 @@ func createReport() string {
 		beego.Info(fmt.Sprintf("Creating report content: %s", p.SlowlogTable))
 		slowInfo += createSlowInfo(items, p, i, mi)
 		slowInfo += "<br/>"
-		slowInfo += `<hr style="#FF710C;" />`
+		slowInfo += `<hr>`
 		slowInfo += "<br/>"
 		beego.Info(fmt.Sprintf("End Create report content: %s", p.SlowlogTable))
 	}
@@ -116,7 +115,7 @@ func createMonthlyReport() string {
 		beego.Info(fmt.Sprintf("Creating report content: %s", monthlyTable))
 		slowInfo += createMonthlySlowInfo(items, p, i, mi)
 		slowInfo += "<br/>"
-		slowInfo += `<hr style="#FF710C;" />`
+		slowInfo += `<hr>`
 		slowInfo += "<br/>"
 		beego.Info(fmt.Sprintf("End Create report content: %s", monthlyTable))
 	}
@@ -137,27 +136,256 @@ func htmlHead() string {
 		`<head>
     		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     		<style class="fox_global_style">
+
         		div.fox_html_content {
             		line-height: 1.5;
         		}
 
         		blockquote {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px;
-            		margin-Left: 0.5em
+            		margin-top: 0px;
+            		margin-bottom: 0px;
+            		margin-left: 0.5em;
         		}
 
         		ol,
         		ul {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px;
+            		margin-top: 0px;
+            		margin-bottom: 0px;
             		list-style-position: inside;
         		}
 
         		p {
-            		margin-Top: 0px;
-            		margin-Bottom: 0px
+            		margin-top: 0px;
+            		margin-bottom: 0px
         		}
+
+				hr {
+					color: lightgray;
+				}
+
+				#hostP, #totalP, #uniqP {
+					margin-top: 0px;
+					margin-bottom: 0px;
+					margin-left: 7px;
+					font-size: 16px;
+					text-decoration: none;
+				}
+
+				#hostSpan {
+					float: left;
+					color: #262626;
+					font-size: 18px;
+					font-weight: bold;
+				}
+
+				#hostDescSpan, #totalSpan, #uniqSpan {
+					color: black;
+					font-size: 15px;
+				}
+
+				#tableDispDiv {
+					padding-bottom: 0px;
+					padding-left: 0px;
+					padding-right: 0px;
+					padding-top: 0px;
+				}
+
+				#tableHeader {
+					background-color: #FF710C;
+					display: table-row;
+					vertical-align: inherit;
+				}
+
+				#tableTr {
+					display: table-row;
+					vertical-align: inherit;
+				}
+
+				#tableHeader300 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 300px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell300 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 300px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
+
+				#tableHeader50 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 50px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell50 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 50px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
+
+				#tableHeader90 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 90px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell90 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 90px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
+
+				#tableHeader60 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 60px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell60 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 60px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
+
+				#tableHeader80 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 80px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell80 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 80px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
+
+				#tableHeader160 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: center;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					min-height: 50px;
+					max-width: 160px;
+					padding-right: 15px;
+					height: 30px;
+					color: rgb(255,255,255);
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px
+				}
+
+				#tableCell160 {
+					border-bottom: rgb(222,222,222) 1px solid;
+					text-align: left;
+					border-left: rgb(222,222,222) 1px solid;
+					padding-bottom: 7px;
+					margin: 0px;
+					padding-left: 7px;
+					max-width: 160px;
+					padding-right: 15px;
+					font-size: 13px;
+					border-right: rgb(241,241,226) 1px solid;
+					padding-top: 7px;
+				}
     		</style>
 			<script type="text/javascript">
 				function toggle(id) {
@@ -281,9 +509,9 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 	var info = ""
 
 	info += `<div style="PADDING-BOTTOM: 0px; MARGIN: 10px 0px 0px; PADDING-LEFT: 15px; PADDING-RIGHT: 0px; PADDING-TOP: 0px">`
-	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="FLOAT: left; COLOR: #262626; FONT-SIZE: 18px">&nbsp;&nbsp; </span> <span style="FLOAT: left; COLOR: #262626; FONT-SIZE: 18px; font-weight:bold">192.168.10.1</span><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; Project</span></p>`
-	info = strings.Replace(info, "192.168.10.1", p.MysqlHost, -1)
-	info = strings.Replace(info, "Project", p.Description, -1)
+	info += `<p id="hostP"><span id="hostSpan">{{.Host}}</span><span id="hostDescSpan">&nbsp;&nbsp;{{.Project}}</span></p>`
+	info = strings.Replace(info, "{{.Host}}", p.MysqlHost, -1)
+	info = strings.Replace(info, "{{.Project}}", p.Description, -1)
 
 	// chain grow with before yesterday and on year-on-year basis (this day last week)
 	yt := yesterdayTotal(p.SlowlogTable)
@@ -330,57 +558,80 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 		models.AddGrowRate(gr)
 	}
 
-	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; TotalCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; TChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYTotal &nbsp;&nbsp;</span></p>`
-	info = strings.Replace(info, "TotalCount", fmt.Sprintf("总语句数: %d", yt), -1)
-	info = strings.Replace(info, "TChain", fmt.Sprintf("环比前天: %s", chainGrowthRateForTotalStr), -1)
-	info = strings.Replace(info, "ChainColor", fmt.Sprintf("%s", chainGrowthRateForTotalStrColor), -1)
-	info = strings.Replace(info, "YOYTotal", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForTotalStr), -1)
-	info = strings.Replace(info, "YOYColor", fmt.Sprintf("%s", yoyBasisRateForTotalStrColor), -1)
+	info += `<p id="totalP"><span id="totalSpan">&nbsp;&nbsp; {{.TotalCount}} &nbsp;&nbsp;</span><span style="color: {{.ChainColor}}; font-size: 15px">&nbsp;&nbsp; {{.TChain}} &nbsp;&nbsp;</span></span><span style="color: {{.YOYColor}}; font-size: 15px">&nbsp;&nbsp; {{.YOYTotal}} &nbsp;&nbsp;</span></p>`
+	info = strings.Replace(info, "{{.TotalCount}}", fmt.Sprintf("总语句数: %d", yt), -1)
+	info = strings.Replace(info, "{{.TChain}}", fmt.Sprintf("环比前天: %s", chainGrowthRateForTotalStr), -1)
+	info = strings.Replace(info, "{{.ChainColor}}", fmt.Sprintf("%s", chainGrowthRateForTotalStrColor), -1)
+	info = strings.Replace(info, "{{.YOYTotal}}", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForTotalStr), -1)
+	info = strings.Replace(info, "{{.YOYColor}}", fmt.Sprintf("%s", yoyBasisRateForTotalStrColor), -1)
 	
-	info += `<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 7px; FONT-SIZE: 16px; TEXT-DECORATION: none"><span style="COLOR: rgb(0,0,0); FONT-SIZE: 15px">&nbsp;&nbsp; UniqCount &nbsp;&nbsp;</span><span style="COLOR: ChainColor; FONT-SIZE: 15px">&nbsp;&nbsp; UChain &nbsp;&nbsp;</span></span><span style="COLOR: YOYColor; FONT-SIZE: 15px">&nbsp;&nbsp; YOYUniq &nbsp;&nbsp;</span></p>`
-	info = strings.Replace(info, "UniqCount", fmt.Sprintf("独立语句数: %d", yu), -1)
-	info = strings.Replace(info, "UChain", fmt.Sprintf("环比前天: %s", chainGrowthRateForUniqStr), -1)
-	info = strings.Replace(info, "ChainColor", fmt.Sprintf("%s", chainGrowthRateForUniqStrColor), -1)
-	info = strings.Replace(info, "YOYUniq", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForUniqStr), -1)
-	info = strings.Replace(info, "YOYColor", fmt.Sprintf("%s", yoyBasisRateForUniqStrColor), -1)
+	info += `<p id="uniqP"><span id="uniqSpan">&nbsp;&nbsp; {{.UniqCount}} &nbsp;&nbsp;</span><span style="color: {{.ChainColor}}; font-size: 15px">&nbsp;&nbsp; {{.UChain}} &nbsp;&nbsp;</span></span><span style="color: {{.YOYColor}}; font-size: 15px">&nbsp;&nbsp; {{.YOYUniq}} &nbsp;&nbsp;</span></p>`
+	info = strings.Replace(info, "{{.UniqCount}}", fmt.Sprintf("独立语句数: %d", yu), -1)
+	info = strings.Replace(info, "{{.UChain}}", fmt.Sprintf("环比前天: %s", chainGrowthRateForUniqStr), -1)
+	info = strings.Replace(info, "{{.ChainColor}}", fmt.Sprintf("%s", chainGrowthRateForUniqStrColor), -1)
+	info = strings.Replace(info, "{{.YOYUniq}}", fmt.Sprintf("同比上周%s: %s", utils.WeekdayCNShortString(utils.Yesterday()), yoyBasisRateForUniqStr), -1)
+	info = strings.Replace(info, "{{.YOYColor}}", fmt.Sprintf("%s", yoyBasisRateForUniqStrColor), -1)
 	
 	info += `<div style="MARGIN: 20px 0px 0px 7px">`
-	info += `<div style="PADDING-BOTTOM: 0px; PADDING-LEFT: 15px; PADDING-RIGHT: 0px; PADDING-TOP: 0px">`
+	info += `<div id="tableDispDiv">`
 	info += `<input type="button" value="显示详情/隐藏详情" onClick="toggle('WhatTable')"/>`
 	info = strings.Replace(info, "WhatTable", fmt.Sprintf("table%d", tableId), -1)
 	info += `<table TableId style="display: none;TEXT-ALIGN: left; MARGIN: 2px 0px 0px; WIDTH: 100%; BORDER-COLLAPSE: collapse" rules="none" bordercolor="#c7c7c7" frame="box">`
 	info = strings.Replace(info, "TableId", fmt.Sprintf("id = \"table%d\"", tableId), -1)
 	info += `<tbody>`
 
-	info += `<tr style="BACKGROUND-COLOR: #FF710C; DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
+	info += `<tr id="tableHeader">`
 	// col name,col width|col name,col width|col name,col width ...
 	cols := models.MyslowReportColsList()
 	if len(cols) == 0 {
 		return ""
 	}
-	// col name,col width
-	var colsName = []string{}
-	var colsWidth = []string{}
-	for _, col := range cols {
-		l := strings.Split(col, ",")
-		if len(l) != 2 {
-			return ""
-		}
-		colName := l[0]
-		width, _ := strconv.ParseInt(l[1], 10,32)
-		if width < 0 || width > 10000 {
-			width = 100
-		}
-		colWidth := fmt.Sprintf("%d", width)
-		colsWidth = append(colsWidth, colWidth)
-		colsName = append(colsName, colName)
-		info += createTableHeader(colWidth, colName)
-	}
+
+	tmp := `<td id="tableHeader300">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[0], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader50">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[1], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader90">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[2], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader60">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[3], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[4], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[5], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[6], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[7], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[8], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader160">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[9], -1)
+	info += tmp
+
 	info += `</tr>`
 
 	for _, i := range items {
-		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
-		info += createItem(i, colsWidth, colsName, mi)
+		info += `<tr id="tableTr">`
+		info += createItem(i, cols)
 		info += `</tr>`
 	}
 
@@ -462,29 +713,52 @@ func createMonthlySlowInfo(items []models.Item, p models.Project, tableId int, m
 	if len(cols) == 0 {
 		return ""
 	}
-	// col name,col width
-	var colsName = []string{}
-	var colsWidth = []string{}
-	for _, col := range cols {
-		l := strings.Split(col, ",")
-		if len(l) != 2 {
-			return ""
-		}
-		colName := l[0]
-		width, _ := strconv.ParseInt(l[1], 10,32)
-		if width < 0 || width > 10000 {
-			width = 100
-		}
-		colWidth := fmt.Sprintf("%d", width)
-		colsWidth = append(colsWidth, colWidth)
-		colsName = append(colsName, colName)
-		info += createTableHeader(colWidth, colName)
-	}
+
+	tmp := `<td id="tableHeader300">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[0], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader50">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[1], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader90">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[2], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader60">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[3], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[4], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[5], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[6], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[7], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader80">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[8], -1)
+	info += tmp
+
+	tmp = `<td id="tableHeader160">{{.HeaderColName}}</td>`
+	tmp = strings.Replace(tmp, "{{.HeaderColName}}", cols[9], -1)
+	info += tmp
+
 	info += `</tr>`
 
 	for _, i := range items {
-		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
-		info += createItem(i, colsWidth, colsName, mi)
+		info += `<tr id="tableTr">`
+		info += createItem(i, cols)
 		info += `</tr>`
 	}
 
@@ -511,23 +785,6 @@ func createMonthlySubject() string {
 		models.MyslowReportSubject(), utils.YearMonthStringByFormat(utils.Yesterday(), "2006-01-02"))
 }
 
-func createTableHeader(colWidth string, colName string) string {
-	tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: center; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; HEIGHT: 30px; COLOR: rgb(255,255,255); FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px">SlowQuerySample</td>`
-	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "SlowQuerySample", colName, -1)
-	return tmp
-}
-
-func createCol(colName string, colWidth string, val string, df string) string {
-	tmp := df
-	tmp = strings.Replace(tmp, "ThisColName", colName, -1)
-	tmp = strings.Replace(tmp, "999999999", colWidth, -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp  = strings.Replace(tmp, "xxx", val, -1)
-	return tmp
-}
-
 func floatColString3(val float64) string {
 	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.3f", val), "0"), ".")
 }
@@ -536,82 +793,79 @@ func floatColString9(val float64) string {
 	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.9f", val), "0"), ".")
 }
 
-func createItem(item models.Item, colsWidth []string, colsName []string, mi models.MaxItem) string {
+func createItem(item models.Item, colsName []string) string {
 	s := ""
 	i := 0
 
-	df := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
 	//dfMax := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="box-shadow: inset 0px 0px 25px red;BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
-	dfMax := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
+	//dfMax := `<td onmouseover='getTooltip(this,"ThisColName: ")' style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;">xxx</td>`
 
 
-	tmp := `<td style="BORDER-BOTTOM: rgb(222,222,222) 1px solid; TEXT-ALIGN: left; BORDER-LEFT: rgb(222,222,222) 1px solid; PADDING-BOTTOM: 7px; MARGIN: 0px; PADDING-LEFT: 7px; min-height: 88888888px; MAX-WIDTH: 999999999px; PADDING-RIGHT: 15px; FONT-SIZE: 13px; BORDER-RIGHT: rgb(241,241,226) 1px solid; PADDING-TOP: 7px;"><textarea readonly="readonly" style="max-width:300px; min-height: 150px; max-height:180px;">xxx</textarea></td>`
-	tmp = strings.Replace(tmp, "999999999", colsWidth[i], -1)
-	tmp = strings.Replace(tmp, "88888888", "50", -1)
-	tmp = strings.Replace(tmp, "xxx", item.Sample, -1)
+	tmp := `<td id="tableCell300"><textarea readonly="readonly" style="max-width:300px; min-height: 150px; max-height: 180px;">{{.xxx}}</textarea></td>`
+	tmp = strings.Replace(tmp, "{{.xxx}}", item.Sample, -1)
 	s += tmp
 	i++
 
 	tsCntStr := fmt.Sprintf("%d", item.TsCnt)
-	if mi.MaxTsCnt == item.TsCnt {
-		s += createCol(colsName[i], colsWidth[i], tsCntStr, dfMax)
-	} else {
-		s += createCol(colsName[i], colsWidth[i], tsCntStr, df)
-	}
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell50">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", tsCntStr, -1)
+	s += tmp
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], item.UserMax, df)
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell90">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", item.UserMax, -1)
+	s += tmp
 	i++
 
-	//f1, _ := item.QueryTimeMin.Float64()
-	//s += createCol(colsName[i], colsWidth[i], floatColString3(f1), df)
-	//i++
-
-	f2, _ := item.QueryTimeMax.Float64()
-	queryTimeMaxStr := floatColString3(f2)
-	if mi.MaxQueryTimeMax.Equal(item.QueryTimeMax) {
-		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, dfMax)
-	} else {
-		s += createCol(colsName[i], colsWidth[i], queryTimeMaxStr, df)
-	}
+	f1, _ := item.QueryTimeMax.Float64()
+	queryTimeMaxStr := floatColString3(f1)
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell60">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", queryTimeMaxStr, -1)
+	s += tmp
 	i++
 
-	f3, _ := item.QueryTimePct95.Float64()
-	s += createCol(colsName[i], colsWidth[i], floatColString3(f3), df)
+	f2, _ := item.QueryTimePct95.Float64()
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell80">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", floatColString3(f2), -1)
+	s += tmp
 	i++
 
-	//f4, _ := item.LockTimeMin.Float64()
-	//s += createCol(colsName[i], colsWidth[i], floatColString9(f4), df)
-	//i++
-
-	f5, _ := item.LockTimeMax.Float64()
-	lockTimeMaxStr := floatColString9(f5)
-	if mi.MaxLockTimeMax.Equal(item.LockTimeMax) {
-		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, dfMax)
-	} else {
-		s += createCol(colsName[i], colsWidth[i], lockTimeMaxStr, df)
-	}
+	f3, _ := item.LockTimeMax.Float64()
+	lockTimeMaxStr := floatColString9(f3)
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell80">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", lockTimeMaxStr, -1)
+	s += tmp
 	i++
 
-	f6, _ := item.LockTimePct95.Float64()
-	s += createCol(colsName[i], colsWidth[i], floatColString9(f6), df)
+	f4, _ := item.LockTimePct95.Float64()
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell80">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", floatColString9(f4), -1)
+	s += tmp
 	i++
-
-	//s += createCol(colsName[i], colsWidth[i], fmt.Sprintf("%d", item.RowsExaminedMin), df)
-	//i++
 
 	rowsExaminedMaxStr := fmt.Sprintf("%d", item.RowsExaminedMax)
-	if mi.MaxRowsExaminedMax == item.RowsExaminedMax {
-		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, dfMax)
-	} else {
-		s += createCol(colsName[i], colsWidth[i], rowsExaminedMaxStr, df)
-	}
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell80">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", rowsExaminedMaxStr, -1)
+	s += tmp
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], fmt.Sprintf("%d", item.RowsExaminedPct95), df)
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell80">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", fmt.Sprintf("%d", item.RowsExaminedPct95), -1)
+	s += tmp
 	i++
 
-	s += createCol(colsName[i], colsWidth[i], item.TsMax.Format("2006-01-02 15:04:05"), df)
+	tmp = `<td onmouseover='getTooltip(this,"{{.ThisColName}}: ")' id="tableCell160">{{.xxx}}</td>`
+	tmp = strings.Replace(tmp, "{{.ThisColName}}", colsName[i], -1)
+	tmp = strings.Replace(tmp, "{{.xxx}}", item.TsMax.Format("2006-01-02 15:04:05"), -1)
+	s += tmp
 
 	return s
 }
