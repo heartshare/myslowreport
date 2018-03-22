@@ -277,15 +277,6 @@ func toMyInsName(ip string, port string) string {
 		strings.Replace(ip, ".", "_", -1), port)
 }
 
-func isIgnoreDbUsers(user string, users []string) bool {
-	for _, u := range users {
-		if strings.Compare(user, u) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
 func createSlowInfo(items []models.Item, p models.Project, tableId int, mi models.MaxItem) string {
 	var info = ""
 
@@ -387,11 +378,7 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 	}
 	info += `</tr>`
 
-	ignoreDbUsers := models.MyslowReportIgnoreDbUsers()
 	for _, i := range items {
-		if isIgnoreDbUsers(i.UserMax, ignoreDbUsers) {
-			continue
-		}
 		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
 		info += createItem(i, colsWidth, colsName, mi)
 		info += `</tr>`
@@ -495,11 +482,7 @@ func createMonthlySlowInfo(items []models.Item, p models.Project, tableId int, m
 	}
 	info += `</tr>`
 
-	ignoreDbUsers := models.MyslowReportIgnoreDbUsers()
 	for _, i := range items {
-		if isIgnoreDbUsers(i.UserMax, ignoreDbUsers) {
-			continue
-		}
 		info += `<tr style="DISPLAY: table-row; VERTICAL-ALIGN: inherit">`
 		info += createItem(i, colsWidth, colsName, mi)
 		info += `</tr>`
