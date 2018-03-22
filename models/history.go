@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ximply/myslowreport/utils"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 type Item struct {
@@ -147,10 +148,36 @@ var maxTableFields = []string{
 	"max_Rows_examined_max",
 }
 
+func isIgnoreDbUsers(user string, users []string) bool {
+	if len(users) == 0 {
+		return false
+	}
+
+	for _, u := range users {
+		if strings.Compare(user, u) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
 func GetSumOfQueryCount(since string, until string, table string) int64 {
 	retry := DbRetry()
-	sql := fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s'",
-	tableFields[TsCnt], table, tableFields[TsMin], since, tableFields[TsMax], until)
+	ignoreDbUsers := MyslowReportIgnoreDbUsers()
+	sql := ""
+	if len(ignoreDbUsers) > 0 {
+		s := ""
+		for _, ignore := range ignoreDbUsers {
+			s = s + fmt.Sprintf("'%s',", ignore)
+		}
+		s = strings.TrimRight(s, ",")
+		sql = fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s' AND user_max NOT IN (%s)",
+			tableFields[TsCnt], table, tableFields[TsMin], since, tableFields[TsMax], until, s)
+	} else {
+		sql = fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s'",
+			tableFields[TsCnt], table, tableFields[TsMin], since, tableFields[TsMax], until)
+	}
+
 	var sum int64
 	var err error
 
@@ -172,8 +199,22 @@ func GetSumOfQueryCount(since string, until string, table string) int64 {
 
 func GetUniqOfQueryCount(since string, until string, table string) int64 {
 	retry := DbRetry()
-	sql := fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s'",
-		table, tableFields[TsMin], since, tableFields[TsMax], until)
+	ignoreDbUsers := MyslowReportIgnoreDbUsers()
+	sql := ""
+	if len(ignoreDbUsers) > 0 {
+		s := ""
+		for _, ignore := range ignoreDbUsers {
+			s = s + fmt.Sprintf("'%s',", ignore)
+		}
+		s = strings.TrimRight(s, ",")
+		sql = fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s' AND user_max NOT IN (%s)",
+			table, tableFields[TsMin], since, tableFields[TsMax], until, s)
+
+	} else {
+		sql = fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s'",
+			table, tableFields[TsMin], since, tableFields[TsMax], until)
+	}
+
 	var count int64
 	var err error
 
@@ -383,11 +424,17 @@ func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64
 		}
 	}
 
+	var ignore int64 = 0
 	if count > 0 {
+		ignoreDbUsers := MyslowReportIgnoreDbUsers()
 		for _, s := range sl {
 			var item Item
-			item.DbMax = utils.InterfaceStringToString(s[DbMax], defaultStringValue)
 			item.UserMax = utils.InterfaceStringToString(s[UserMax], defaultStringValue)
+			if isIgnoreDbUsers(item.UserMax, ignoreDbUsers) {
+				ignore++
+				continue
+			}
+			item.DbMax = utils.InterfaceStringToString(s[DbMax], defaultStringValue)
 			item.Sample = utils.InterfaceStringToString(s[Sample], defaultStringValue)
 
 			item.TsMin = utils.InterfaceStringToTimeByFormat(s[TsMin],"2006-01-02 15:04:05", defaultTime)
@@ -426,7 +473,7 @@ func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64
 		}
 	}
 
-	return count, il
+	return count - ignore, il
 }
 
 func GetOrderByQueryCountDesc(since string, until string, table string) (int64, []Item) {
@@ -525,11 +572,17 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 		}
 	}
 
+	var ignore int64 = 0
 	if count > 0 {
+		ignoreDbUsers := MyslowReportIgnoreDbUsers()
 		for _, s := range sl {
 			var item Item
-			item.DbMax = utils.InterfaceStringToString(s[DbMax], defaultStringValue)
 			item.UserMax = utils.InterfaceStringToString(s[UserMax], defaultStringValue)
+			if isIgnoreDbUsers(item.UserMax, ignoreDbUsers) {
+				ignore++
+				continue
+			}
+			item.DbMax = utils.InterfaceStringToString(s[DbMax], defaultStringValue)
 			item.Sample = utils.InterfaceStringToString(s[Sample], defaultStringValue)
 
 			item.TsMin = utils.InterfaceStringToTimeByFormat(s[TsMin],"2006-01-02 15:04:05", defaultTime)
@@ -568,6 +621,6 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 		}
 	}
 
-	return count, il
+	return count - ignore, il
 }
 
