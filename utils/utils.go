@@ -244,3 +244,15 @@ func TarFile(src string, dst string, dir string) {
 	cmd.Run()
 	cmd.Wait()
 }
+
+func Last30DaysWithArrIndex() (map[string]int, []string) {
+	m := make(map[string]int)
+	l := []string{}
+	from := time.Now().AddDate(0, -1, -2)
+	for i := 0; i < 30; i++ {
+		t := from.AddDate(0,0, i)
+		m[t.Format("2006-01-02")] = i
+		l = append(l, t.Format("2006-01-02"))
+	}
+	return m, l
+}
