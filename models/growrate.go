@@ -365,3 +365,44 @@ func AddGrowRateMonthly(grm GrowRateMonthly) int64 {
 
 	return rowsAffected
 }
+
+func GetLast30DaysCountInfo(name string) (int64, map[string]string) {
+	m := make(map[string]string)
+	from := time.Now().AddDate(0, -1, -3)
+	retry := DbRetry()
+	sql := fmt.Sprintf("SELECT " +
+		tableGrowRateFields[StatDate] + ", " +
+		tableGrowRateFields[YesterdayTotal] + ", " +
+		tableGrowRateFields[YesterdayUniq] + " " +
+		" FROM %s WHERE %s = '%s' AND %s > '%s'",
+
+		tableName(), tableGrowRateFields[MyInsName],
+		name, tableGrowRateFields[StatDate], from.Format("2006-01-02"))
+
+	var count int64
+	var err error
+	var sl []orm.ParamsList
+
+	for i := 0; i < retry; i++ {
+		count = 0
+		err = nil
+		count, err = orm.NewOrm().Raw(sql).ValuesList(&sl,
+			tableGrowRateFields[StatDate],
+			tableGrowRateFields[YesterdayTotal],
+			tableGrowRateFields[YesterdayUniq])
+		if err == nil {
+			break
+		} else {
+			beego.Info(fmt.Sprintf("Get error when query %s: %s", tableName(), err))
+			continue
+		}
+	}
+
+	for _, s := range sl {
+		date := utils.DateString(utils.InterfaceStringToString(s[0], defaultStringValue))
+		m[date] = fmt.Sprintf("%d,%d", utils.InterfaceStringToInt64(s[1], defaultIntValue),
+			utils.InterfaceStringToInt64(s[2], defaultIntValue))
+	}
+
+	return count, m
+}
