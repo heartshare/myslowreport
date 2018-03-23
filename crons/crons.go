@@ -13,6 +13,7 @@ import (
 	"github.com/ximply/myslowreport/email"
 	"github.com/shopspring/decimal"
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/ximply/myslowreport/dingding"
 )
 
 func monthlyTableName(table string) string {
@@ -1030,6 +1031,15 @@ func sendMysqlSlowlogDailyReport() {
 			sendFileList, body, "html")
 		if ret == 0 && err == nil {
 			beego.Info("Send email report successfully")
+			if utils.FirstDayOfMonth(utils.Today()) {
+				err := dingding.SendTextToDingding(models.MyslowReportDdTips(),
+					models.MyslowReportAtlist(), false, models.MyslowReportDdWebhook())
+				if err != nil {
+					beego.Info(fmt.Sprintf("Send dingding tips fail: %s", err.Error()))
+				} else {
+					beego.Info("Send dingding tips successfully")
+				}
+			}
 			return
 		}
 		beego.Info(fmt.Sprintf("Send email report fail and try again: %s,%d", err.Error(), ret))
