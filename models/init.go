@@ -317,3 +317,41 @@ func MyslowReportIgnoreDbUsers() []string {
 	s := beego.AppConfig.String("myslowreport.ignoredbusers")
 	return strings.Split(s, "|")
 }
+
+func MyslowReportDdWebhook() string {
+	return beego.AppConfig.String("myslowreport.ddwebhook")
+}
+
+func MyslowReportDdTips() string {
+	return beego.AppConfig.String("myslowreport.ddtips")
+}
+
+func MyslowReportDdTimeout() int {
+	t, err := beego.AppConfig.Int("myslowreport.ddtimeout")
+	if err != nil {
+		t = 10
+	}
+	return t
+}
+
+func MyslowReportDdRetry() int {
+	retry, err := beego.AppConfig.Int("myslowreport.ddretry")
+	if err != nil {
+		retry = 2
+	}
+	return retry
+}
+
+func MyslowReportAtlist() []string {
+	s := beego.AppConfig.String("myslowreport.ddatlist")
+	l := strings.Split(s, "|")
+	al := []string{}
+	for _, at := range l {
+		tmp := strings.Split(at, ",")
+		if len(tmp) != 2 {
+			continue
+		}
+		al = append(al, tmp[0])
+	}
+	return al
+}
