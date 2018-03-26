@@ -39,6 +39,46 @@ func createReport() string {
 	slowInfo += `<div style="BORDER-BOTTOM: #FF710C 1px solid; BORDER-LEFT: #FF710C 1px solid; PADDING-BOTTOM: 5px; PADDING-LEFT: 9px; PADDING-RIGHT: 9px; BACKGROUND: #f9f9f9; BORDER-TOP: #FF710C 1px solid; BORDER-RIGHT: #FF710C 1px solid; PADDING-TOP: 5px">`
 	slowInfo += `<div style="PADDING-BOTTOM: 0px; MARGIN: 10px 0px 0px; PADDING-LEFT: 15px; PADDING-RIGHT: 0px; PADDING-TOP: 0px">`
 
+	info := `<div style="padding-left:20px;">`
+	info += `<input type="button" value="显示总体趋势/隐藏总体趋势" onClick="showTrend('canvasDivAll')" />`
+	info += `</div>`
+	info += `<div id="canvasDivAll" style="width:70%;">`
+	info += `<canvas id="canvasAll"></canvas>`
+	info += `<script>`
+	info += `var l = {
+			labels: [{{.DateLabelsAll}}],
+			datasets: [{
+				label: '总语句数',
+				borderColor: window.chartColors.blue,
+				backgroundColor: window.chartColors.blue,
+				fill: false,
+				data: [{{.TDatasAll}}],
+				yAxisID: 'y-axis-1',
+			}, {
+				label: '独立语句数',
+				borderColor: window.chartColors.red,
+				backgroundColor: window.chartColors.red,
+				fill: false,
+				data: [{{.UDatasAll}}],
+				yAxisID: 'y-axis-2'
+			}]
+		};
+
+		function canvasFuncAll() {
+			var ctx = document.getElementById('canvasAll').getContext('2d');
+			Chart.Line(ctx, {
+				data: l,
+				options: op
+			});
+		};
+		canvasFuncAll();`
+
+	info += `</script>`
+	info += `</div>`
+	info += `<hr>`
+
+	slowInfo += info
+
 	since := fmt.Sprintf("%s 23:59:59", utils.BeforeYesterdayStringByFormat("2006-01-02"))
 	until := fmt.Sprintf("%s 00:00:00", utils.TodayStringByFormat("2006-01-02"))
 	for i, p := range pl {
@@ -63,6 +103,45 @@ func createReport() string {
 		slowInfo += "<br/>"
 		beego.Info(fmt.Sprintf("End Create report content: %s", p.SlowlogTable))
 	}
+
+	m, l := utils.LastMonthWithArrIndex()
+	dateLabels := ""
+	for _, date := range l {
+		dateLabels += fmt.Sprintf("'%s',", date)
+	}
+	dateLabels = strings.TrimRight(dateLabels, ",")
+	var tData [31]string
+	var uData [31]string
+	for i:= 0; i < 31; i++ {
+		tData[i] = "null"
+		uData[i] = "null"
+	}
+
+	_, datas := models.GetLastMonthAllCountInfo()
+	for k, v := range datas {
+		if _, ok := m[k]; ok {
+			if m[k] > -1 && m[k] < 31 {
+				s := strings.Split(v, ",")
+				if len(s) == 2 {
+					tData[m[k]] = s[0]
+					uData[m[k]] = s[1]
+				}
+			}
+		}
+	}
+
+	tDataStr := ""
+	uDataStr := ""
+	for i := 0; i < 31; i++ {
+		tDataStr += fmt.Sprintf("%s,", tData[i])
+		uDataStr += fmt.Sprintf("%s,", uData[i])
+	}
+	tDataStr = strings.TrimRight(tDataStr, ",")
+	uDataStr = strings.TrimRight(uDataStr, ",")
+
+	slowInfo = strings.Replace(slowInfo, "{{.DateLabelsAll}}", dateLabels, -1)
+	slowInfo = strings.Replace(slowInfo, "{{.TDatasAll}}", tDataStr, -1)
+	slowInfo = strings.Replace(slowInfo, "{{.UDatasAll}}", uDataStr, -1)
 
 	slowInfo += `</div>`
 	slowInfo += `</div>`
@@ -397,7 +476,6 @@ func htmlHead() string {
 					min-height: 400px;
 					max-width: 1200px;
 				}
-
     		</style>
 			<script type="text/javascript">
 				function toggle(id) {
@@ -419,6 +497,47 @@ func htmlHead() string {
 					blue: 'rgb(54, 162, 235)',
 					purple: 'rgb(153, 102, 255)',
 					grey: 'rgb(201, 203, 207)'
+				};
+
+				op = {
+					responsive: true,
+					stacked: false,
+					title: {
+						display: true,
+						text: '最近一个月趋势图'
+					},
+					tooltips: {
+						mode: 'index',
+						footerFontStyle: 'normal'
+					},
+					hover: {
+						mode: 'index',
+						intersect: true
+					},
+					scales: {
+						yAxes: [{
+							type: 'linear',
+							display: true,
+							position: 'left',
+							id: 'y-axis-1',
+							scaleLabel: {
+								display: true,
+								labelString: '总语句数'
+							}
+						}, {
+							type: 'linear',
+							display: true,
+							position: 'right',
+							id: 'y-axis-2',
+							scaleLabel: {
+								display: true,
+								labelString: '独立语句数'
+							},
+							gridLines: {
+								drawOnChartArea: false,
+							},
+						}],
+					}
 				};
 
 				function showTrend(id) {
@@ -632,52 +751,28 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 			var ctx = document.getElementById('{{.canvas}}').getContext('2d');
 			Chart.Line(ctx, {
 				data: l,
-				options: {
-					responsive: true,
-					hoverMode: 'index',
-					stacked: false,
-					title: {
-						display: true,
-						text: '最近30天趋势图'
-					},
-					scales: {
-						yAxes: [{
-							type: 'linear',
-							display: true,
-							position: 'left',
-							id: 'y-axis-1',
-						}, {
-							type: 'linear',
-							display: true,
-							position: 'right',
-							id: 'y-axis-2',
-
-							gridLines: {
-								drawOnChartArea: false,
-							},
-						}],
-					}
-				}
+				options: op
 			});
 		};
 		{{.Func}}();`
 
-	m, l := utils.Last30DaysWithArrIndex()
+	m, l := utils.LastMonthWithArrIndex()
 	dateLabels := ""
 	for _, date := range l {
 		dateLabels += fmt.Sprintf("'%s',", date)
 	}
 	dateLabels = strings.TrimRight(dateLabels, ",")
-	var tData [30]string
-	var uData [30]string
-	for i:= 0; i < 30; i++ {
+	var tData [31]string
+	var uData [31]string
+	for i:= 0; i < 31; i++ {
 		tData[i] = "null"
 		uData[i] = "null"
 	}
-	_, datas := models.GetLast30DaysCountInfo(myInsName)
+
+	_, datas := models.GetLastMonthCountInfo(myInsName)
 	for k, v := range datas {
 		if _, ok := m[k]; ok {
-			if m[k] > -1 && m[k] < 30 {
+			if m[k] > -1 && m[k] < 31 {
 				s := strings.Split(v, ",")
 				if len(s) == 2 {
 					tData[m[k]] = s[0]
@@ -689,13 +784,13 @@ func createSlowInfo(items []models.Item, p models.Project, tableId int, mi model
 
 	tDataStr := ""
 	uDataStr := ""
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 31; i++ {
 		tDataStr += fmt.Sprintf("%s,", tData[i])
 		uDataStr += fmt.Sprintf("%s,", uData[i])
 	}
 	tDataStr = strings.TrimRight(tDataStr, ",")
 	uDataStr = strings.TrimRight(uDataStr, ",")
-	
+
 	info = strings.Replace(info, "{{.DateLabels}}", dateLabels, -1)
 	info = strings.Replace(info, "{{.TDatas}}", tDataStr, -1)
 	info = strings.Replace(info, "{{.UDatas}}", uDataStr, -1)
@@ -1091,7 +1186,8 @@ func sendMysqlSlowlogDailyReport() {
 	utils.SaveReport(fmt.Sprintf("./report/%s", reportFile), slowInfo)
 	sendFileList := ""
 	fileListTgz := fmt.Sprintf("DailySlow.tgz")
-
+	
+	if utils.FirstDayOfMonth(utils.Today()) {
 	if utils.FirstDayOfMonth(utils.Today()) {
 		slowInfoMonthly := createMonthlyReport()
 		ds := utils.YearMonthStringByFormat(utils.Today(),"20060102")
