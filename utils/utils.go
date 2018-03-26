@@ -175,6 +175,22 @@ func StringToTimeByFormat(s string, format string) time.Time {
 	return t
 }
 
+func StringToFloat64(s string, defaultValue float64) float64 {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return defaultValue
+	}
+	return v
+}
+
+func StringToInt64(s string, defaultValue int64) int64 {
+	v, err := strconv.ParseInt(s,10,64)
+	if err != nil {
+		return defaultValue
+	}
+	return v
+}
+
 func InterfaceStringToInt64(s interface{}, defaultValue int64) int64 {
 	if s == nil {
 		return defaultValue
@@ -245,14 +261,17 @@ func TarFile(src string, dst string, dir string) {
 	cmd.Wait()
 }
 
-func Last30DaysWithArrIndex() (map[string]int, []string) {
+func LastMonthWithArrIndex() (map[string]int, []string) {
 	m := make(map[string]int)
 	l := []string{}
 	from := time.Now().AddDate(0, -1, -2)
-	for i := 0; i < 30; i++ {
+	to := time.Now()
+	for i := 0; i < 31; i++ {
 		t := from.AddDate(0,0, i)
-		m[t.Format("2006-01-02")] = i
-		l = append(l, t.Format("2006-01-02"))
+		if t.Before(to) {
+			m[t.Format("2006-01-02")] = i
+			l = append(l, t.Format("2006-01-02"))
+		}
 	}
 	return m, l
 }
