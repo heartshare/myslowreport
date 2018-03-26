@@ -177,7 +177,6 @@ func GetSumOfQueryCount(since string, until string, table string) int64 {
 		sql = fmt.Sprintf("SELECT SUM(%s) FROM %s WHERE %s > '%s' AND %s < '%s'",
 			tableFields[TsCnt], table, tableFields[TsMin], since, tableFields[TsMax], until)
 	}
-
 	var sum int64
 	var err error
 
@@ -209,7 +208,6 @@ func GetUniqOfQueryCount(since string, until string, table string) int64 {
 		s = strings.TrimRight(s, ",")
 		sql = fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s' AND user_max NOT IN (%s)",
 			table, tableFields[TsMin], since, tableFields[TsMax], until, s)
-
 	} else {
 		sql = fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s > '%s' AND %s < '%s'",
 			table, tableFields[TsMin], since, tableFields[TsMax], until)
@@ -371,7 +369,7 @@ func GetOrderByQueryTimeMaxDesc(since string, until string, table string) (int64
 			" FROM %s WHERE ts_min > '%s' AND ts_max < '%s' ORDER BY Query_time_max DESC",
 
 			table, since, until)
-
+	
 	var count int64
 	var err error
 	var sl []orm.ParamsList
@@ -623,4 +621,5 @@ func GetOrderByQueryCountDesc(since string, until string, table string) (int64, 
 
 	return count - ignore, il
 }
+
 
