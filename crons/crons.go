@@ -1188,7 +1188,6 @@ func sendMysqlSlowlogDailyReport() {
 	fileListTgz := fmt.Sprintf("DailySlow.tgz")
 	
 	if utils.FirstDayOfMonth(utils.Today()) {
-	if utils.FirstDayOfMonth(utils.Today()) {
 		slowInfoMonthly := createMonthlyReport()
 		ds := utils.YearMonthStringByFormat(utils.Today(),"20060102")
 		reportFileMonthly := fmt.Sprintf("%s.html", ds)
